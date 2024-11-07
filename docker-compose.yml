@@ -1,0 +1,45 @@
+
+# Inspiration taken from https://github.com/felipewom/docker-compose-postgres/
+
+services:
+    db:
+        image: 'postgres:latest'
+
+        # This maps port 5432 in the docker internal network to port 5432
+        # on the host machine. If we do not want the database to be accessible
+        # outside the container internal network, comment out the line below.
+        ports:
+            - 5432:5432
+
+        environment:
+            POSTGRES_USER: admin        # PostgreSQL user to connect to DB
+            POSTGRES_PASSWORD: changeme # PostgreSQL password to connect to DB (CHANGE ME!!!)
+        
+        networks:
+            - backend
+        
+        volumes:
+            - ${PWD}/sql/dbdata/:/var/lib/postgresql/data/
+            - ${PWD}/sql/scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+    
+    # This is a web app GUI to view the database. Added for development convenience/debug
+    # but does not need to be run in final product
+    pgadmin:
+        image: dpage/pgadmin4
+        
+        ports:
+            - 5433:80
+        environment:
+            PGADMIN_DEFAULT_EMAIL: test@localhost.lan
+            PGADMIN_DEFAULT_PASSWORD: password
+        depends_on:
+            - db
+        networks:
+            - backend
+        volumes:
+            - ${PWD}/sql/pgadmin-data/:/var/lib/pgadmin/
+        
+networks:
+    backend:
+        driver: bridge
