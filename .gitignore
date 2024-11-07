@@ -1,4 +1,4 @@
 # Database volume information
 
-dbdata/*
-pgadmin-data/*
+sql/dbdata/*
+sql/pgadmin-data/*
