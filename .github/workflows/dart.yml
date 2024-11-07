@@ -26,7 +26,7 @@ jobs:
 
       - name: Install dependencies
         run:
-          cd chitchat_app 
+          cd chitchat_app; 
           dart pub get
 
       # Uncomment this step to verify the use of 'dart format' on each commit.
@@ -43,5 +43,5 @@ jobs:
       # want to change this to 'flutter test'.
       - name: Run tests
         run: 
-          cd chitchat_app 
+          cd chitchat_app;
           dart test
