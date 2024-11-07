@@ -2,14 +2,15 @@
 // Docs: https://dbml.dbdiagram.io/docs
 
 Table User {
-  id integer [primary key]
-  email varchar
+  id integer [primary key, increment]
+  email varchar [unique]
   name varchar
   admin bool
+  password varchar(80)
 }
 
 Table Comment {
-  id integer [primary key]
+  id integer [primary key, increment]
   contents text
   user_id integer
   post_id integer
@@ -17,7 +18,7 @@ Table Comment {
 }
 
 Table Post {
-  id integer [primary key]
+  id integer [primary key, increment]
   contents text
   user_id integer
   created_at timestamp

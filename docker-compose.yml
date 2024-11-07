@@ -12,7 +12,6 @@ services:
             - 5432:5432
 
         environment:
-            POSTGRES_USER: admin        # PostgreSQL user to connect to DB
             POSTGRES_PASSWORD: changeme # PostgreSQL password to connect to DB (CHANGE ME!!!)
         
         networks:
