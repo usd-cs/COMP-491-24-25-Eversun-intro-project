@@ -2,6 +2,7 @@ from flask import Flask
 import psycopg2
 import random
 import time
+import json
 
 def get_db_connection():
     connection = psycopg2.connect(host='localhost', 
@@ -16,54 +17,66 @@ app = Flask(__name__)
 
 #@app.route('/')
 #TO_DO: Need to check authentication
-@app.route('/', methods=['GET','POST'])
-def index():
-    if request.method == "GET":
-        print('Received GET message\n')
-        post_id = request.form.get('postid')
-        return view_single_post(post_id)
-    elif request.method == "POST":
-        #return 'Received POST message\n'
-        command = request.form.get(command)
-        if command == "post":
-            my_post = request.form.get('mypost')
-            user_id = request.form.get('userid')
-            timestamp = time.time()
-            post_id = random.randomint(0,1000000) #generating a random number is temp, replace with unique post id, 
+@app.route('/getonepost', methods=['GET'])
+def getonepost():
+    print('Received GET message\n')
+    post_id = request.form.get('postid')
+    return view_single_post(post_id)
+
+@app.route('/getallposts', methods=['GET'])
+def getallposts():
+    return view_posts()
+    
+
+@app.route('/createpost', methods=['POST'])
+def createpost():
+    command = request.form.get(command)
+    my_post = request.form.get('mypost')
+    user_id = request.form.get('userid')
+    timestamp = time.time()
+    post_id = random.randomint(0,1000000) #generating a random number is temp, replace with unique post id, 
                                                     #requires persisting latest post id and incrementing
-            print(my_post, user_id, timestamp, post_id)
-            #print(request.form.get('mypost'),request.form.get('userid'))
+    print(my_post, user_id, timestamp, post_id)
+    #print(request.form.get('mypost'),request.form.get('userid'))
             
-            return insert_single_post(my_post, user_id, timestamp, post_id)
-        elif request.method == "comment":
-            my_comment = request.form.get('mycomment')
-            user_id = request.form.get('userid')
-            post_id = request.form.get('postid')
-            timestamp = time.time()
-            comment_id = random.randomint(0,1000000) #generating a random number is temp, replace with unique post id, 
+    return insert_single_post(my_post, user_id, timestamp, post_id)
+
+
+
+@app.route('/createcomment', methods=['POST'])
+def createcomment(): 
+    my_comment = request.form.get('mycomment')
+    user_id = request.form.get('userid')
+    post_id = request.form.get('postid')
+    timestamp = time.time()
+    comment_id = random.randomint(0,1000000) #generating a random number is temp, replace with unique post id, 
                                                     #requires persisting latest post id and incrementing
-            print(my_comment, user_id, timestamp, post_id, comment_id)
-            #print(request.form.get('mypost'),request.form.get('userid'))
+    print(my_comment, user_id, timestamp, post_id, comment_id)
+    #print(request.form.get('mypost'),request.form.get('userid'))
             
-            return insert_single_comment(my_comment, user_id, timestamp, post_id, comment_id)
+    return insert_single_comment(my_comment, user_id, timestamp, post_id, comment_id)
+
+
+@app.route('/deletepost',methods=['POST'])
+def deletepost():  
+    user_id = request.form.get('userid')
+    post_id = request.form.get('postid')
+    print(user_id, post_id)
+    #print(request.form.get('mypost'),request.form.get('userid'))
             
-        elif request.method == "delete_post":
-            user_id = request.form.get('userid')
-            post_id = request.form.get('postid')
-            print(user_id, post_id)
-            #print(request.form.get('mypost'),request.form.get('userid'))
+    return delete_single_post(user_id,post_id)
             
-            return delete_single_post(user_id,post_id)
+
+@app.route('/deletecomment',methods=['POST'])
+def deletecomment():
+
+    user_id = request.form.get('userid')
+    comment_id = request.form.get('commentid')
+    print(user_id, comment_id)
+    #print(request.form.get('mypost'),request.form.get('userid'))
             
-        elif request.method == "delete_comment":
-            user_id = request.form.get('userid')
-            comment_id = request.form.get('commentid')
-            print(user_id, comment_id)
-            #print(request.form.get('mypost'),request.form.get('userid'))
-            
-            return delete_single_comment(user_id,comment_id)
-    else:
-        return 'Unidentifiable message\n'
+    return delete_single_comment(user_id,comment_id)
+
     
 def delete_single_comment(user_id, comment_id):
     connection = get_db_connection()
@@ -112,10 +125,11 @@ def view_posts():
     posts = cur.execute('SELECT * FROM posts').fetchall()
     cur.close()
     connection.close()
-    return posts
+    json_string = json.dumps(posts, indent=4)
+    return json_string
     #return render_template('index.html', posts=posts)
 
-#might need to modify index.html
+
 
 def view_single_post(post_id):
     connection = get_db_connection()
@@ -124,14 +138,21 @@ def view_single_post(post_id):
                         (post_id,)).fetchone()
     cur.close()
     connection.close()
+    json_string = json.dumps(post, indent=4)
     if post is None:
         abort(404)
-    return post
+    return json_string
 
 
 
 #How to test:
 #curl -F command="post" mypost="today was a great day" -F userid="17"  http://127.0.0.1:4999
+
+#Steps to do:
+#1) Unit tests
+#2) Authentication
+#3) Generating unique post id
+
 
 
     
