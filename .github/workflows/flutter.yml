@@ -26,3 +26,8 @@ jobs:
         run:
           cd chitchat_app; 
           flutter analyze
+
+      - name: Run Flutter tests
+        run:
+          cd chitchat_app;
+          flutter test
