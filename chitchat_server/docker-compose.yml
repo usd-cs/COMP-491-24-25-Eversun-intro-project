@@ -5,15 +5,16 @@ services:
     db:
         image: 'postgres:latest'
 
-        # This maps port 5432 in the docker internal network to port 5432
-        # on the host machine. If we do not want the database to be accessible
-        # outside the container internal network, comment out the line below.
-        ports:
-            - 5432:5432
-
         environment:
             POSTGRES_PASSWORD: changeme # PostgreSQL password to connect to DB (CHANGE ME!!!)
         
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+            interval: 10s
+            retries: 5
+            start_period: 30s
+            timeout: 10s
+
         networks:
             - backend
         
@@ -34,16 +35,20 @@ services:
             PGADMIN_DEFAULT_PASSWORD: password
         depends_on:
             - db
+
         networks:
             - backend
         volumes:
             - ${PWD}/sql/pgadmin-data/:/var/lib/pgadmin/
+    
     web:
         build: .
         ports:
             - 8080:8080
         depends_on:
-            - db
+            db:
+                condition: service_healthy
+                restart: true
         networks:
             - backend
 networks:
