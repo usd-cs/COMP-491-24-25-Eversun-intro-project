@@ -10,6 +10,24 @@ db = SQLAlchemy(model_class=Base)
 
 from sqlalchemy.orm import Mapped, mapped_column
 
+
+# These classes need to match the database tables specified in sql/scripts/init.sql in order
+# to work properly.
+
+# Additionally in the main Flask app, the following code needs to be run in order for the database to connect
+# correctly.
+# 
+# ```python3
+# app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://user:password@hostname"
+# db.init_app(app)
+# with app.app_context():
+#     db.reflect()
+# ```
+#
+# After these steps are followed the database can be interacted with via the below model classes and the 
+# db.session methods. See https://flask-sqlalchemy.readthedocs.io/en/stable/quickstart/ for examples.
+
+
 class User(db.Model):
     __tablename__ = "users"
     id: Mapped[int] = mapped_column(primary_key=True)
