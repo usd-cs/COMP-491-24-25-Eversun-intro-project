@@ -30,3 +30,5 @@ ALTER TABLE comments ADD FOREIGN KEY (user_id) REFERENCES users (id);
 ALTER TABLE comments ADD FOREIGN KEY (post_id) REFERENCES posts (id);
 
 ALTER TABLE posts ADD FOREIGN KEY (user_id) REFERENCES users (id);
+
+INSERT INTO users (email, name, admin, password) VALUES ('test@localhost.lan', 'admin', true, 'hash+salt');
