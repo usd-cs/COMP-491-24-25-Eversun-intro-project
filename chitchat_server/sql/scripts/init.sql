@@ -31,20 +31,4 @@ ALTER TABLE comments ADD FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE C
 
 ALTER TABLE posts ADD FOREIGN KEY (user_id) REFERENCES users (id);
 
-CREATE SEQUENCE post_id_seq
-    [INCREMENT BY 2]
-    [START WITH 101]
-    [MINVALUE 101]
-    [MAXVALUE 1000001]
-    [NO CYCLE]
-    [OWNED BY { posts.id }]
-
-CREATE SEQUENCE comment_id_seq
-    [INCREMENT BY 2]
-    [START WITH 100]
-    [MINVALUE 100]
-    [MAXVALUE 1000000]
-    [NO CYCLE]
-    [OWNED BY { comments.id }]
-
 INSERT INTO users (email, name, admin, password) VALUES ('test@localhost.lan', 'admin', true, 'hash+salt');
