@@ -34,6 +34,8 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   int _selectedIndex = 1; // Tracks the selected navigation index.
+  bool isLoggedIn = false;
+  bool isAdmin = false;
 
   // List of pages for navigation.
   static const List<Widget> _pages = <Widget>[
@@ -50,6 +52,8 @@ class _MainPageState extends State<MainPage> {
 
   /// Displays a dialog to create a new post with a title and content.
   void _showCreatePostDialog() {
+    if (!isLoggedIn) return; // Only allow post creation if logged in
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -90,6 +94,7 @@ class _MainPageState extends State<MainPage> {
                   AccountPage.recentPosts.add({
                     'title': titleController.text,
                     'content': contentController.text,
+                    'username': 'user123',
                     'comments': _generateRandomComments(),
                   });
                   Navigator.of(context).pop();
@@ -151,6 +156,18 @@ class _MainPageState extends State<MainPage> {
           ),
         ),
         backgroundColor: Colors.orange,
+        actions: [
+          if (isLoggedIn)
+            IconButton(
+              icon: Icon(Icons.logout),
+              onPressed: _logout,
+            )
+          else
+            IconButton(
+              icon: Icon(Icons.login),
+              onPressed: _showLoginDialog,
+            ),
+        ],
       ),
       body: _pages[_selectedIndex], // Displays the current page.
       bottomNavigationBar: BottomNavigationBar(
@@ -169,12 +186,77 @@ class _MainPageState extends State<MainPage> {
         unselectedItemColor: Colors.grey,
         onTap: _onItemTapped,
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showCreatePostDialog,
-        child: Icon(Icons.add),
-        backgroundColor: Colors.orange,
-      ),
+      floatingActionButton: isLoggedIn
+          ? FloatingActionButton(
+              onPressed: _showCreatePostDialog,
+              child: Icon(Icons.add),
+              backgroundColor: Colors.orange,
+            )
+          : null,
     );
+  }
+
+  void _showLoginDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        TextEditingController usernameController = TextEditingController();
+        TextEditingController passwordController = TextEditingController();
+        return AlertDialog(
+          title: Text('Login'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: usernameController,
+                decoration: InputDecoration(labelText: 'Username'),
+              ),
+              SizedBox(height: 8),
+              TextField(
+                controller: passwordController,
+                decoration: InputDecoration(labelText: 'Password'),
+                obscureText: true,
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text('Login'),
+              onPressed: () {
+                String username = usernameController.text;
+                String password = passwordController.text;
+                if ((username == 'admin' && password == 'adminpass') ||
+                    (username == 'user' && password == 'userpass')) {
+                  setState(() {
+                    isLoggedIn = true;
+                    isAdmin = username == 'admin';
+                  });
+                  Navigator.of(context).pop();
+                } else {
+                  // Show error message
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Invalid credentials')),
+                  );
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _logout() {
+    setState(() {
+      isLoggedIn = false;
+      isAdmin = false;
+    });
   }
 }
 
@@ -241,6 +323,7 @@ class HomePage extends StatelessWidget {
           content: post['content'],
           username: post['username'],
           comments: post['comments'],
+          isAdmin: (context.findAncestorStateOfType<_MainPageState>()?.isAdmin ?? false),
         );
       },
     );
@@ -251,9 +334,10 @@ class HomePage extends StatelessWidget {
     final random = Random();
     final List<String> usernames = [
       "randomUser1",
-      "FirewallFox",
-      "GlitchGuru",
-      "TerminalTitan",
+      "randomUser2",
+      "randomUser3",
+      "randomUser4",
+      "randomUser5",
     ];
     final List<String> randomTitles = [
       "Random Thoughts",
@@ -292,11 +376,11 @@ class HomePage extends StatelessWidget {
   List<Map<String, String>> _generateRandomComments() {
     final random = Random();
     final List<String> usernames = [
-      "NullNinja",
+      "user123",
       "flutterFan",
       "devGuru",
-      "StackSlinger",
-      "JavaJunkie",
+      "codeMaster",
+      "techSavvy",
     ];
     final List<String> randomComments = [
       "I totally agree!",
@@ -333,9 +417,10 @@ class PostCard extends StatelessWidget {
   final String? content;
   final String? username;
   final List<Map<String, String>>? comments;
+  final bool isAdmin;
   final Random random = Random();
 
-  PostCard({this.title, this.content, this.username, this.comments});
+  PostCard({this.title, this.content, this.username, this.comments, this.isAdmin = false});
 
   @override
   Widget build(BuildContext context) {
@@ -376,6 +461,20 @@ class PostCard extends StatelessWidget {
                 child: Text('View Comments'),
               ),
             ),
+            if (isAdmin)
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () {
+                    // Delete post logic
+                    AccountPage.recentPosts.removeWhere((post) => post['title'] == title);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Post deleted')),
+                    );
+                  },
+                  child: Text('Delete Post', style: TextStyle(color: Colors.red)),
+                ),
+              ),
           ],
         ),
       ),
@@ -420,6 +519,21 @@ class PostCard extends StatelessWidget {
                       ),
                       SizedBox(height: 4),
                       Text(comment['content']!),
+                      if (isAdmin)
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () {
+                              // Delete comment logic
+                              comments?.remove(comment);
+                              Navigator.of(context).pop();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Comment deleted')),
+                              );
+                            },
+                            child: Text('Delete Comment', style: TextStyle(color: Colors.red)),
+                          ),
+                        ),
                       Divider(),
                     ],
                   )),
