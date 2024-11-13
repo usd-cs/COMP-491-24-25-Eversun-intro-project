@@ -2,6 +2,7 @@ enum DisplayStates {
   forum,
   login, 
   comment,
+  account,
 }
 
 enum UserType {

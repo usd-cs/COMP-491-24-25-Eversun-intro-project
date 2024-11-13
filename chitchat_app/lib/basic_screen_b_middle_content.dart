@@ -17,6 +17,8 @@ class MiddleSection extends StatelessWidget {
       content = const ForumContent();
     } else if (currentDisplayState == DisplayStates.comment) {
       content = const CommentContent();
+    } else if (currentDisplayState == DisplayStates.account) {
+      content = AccountContent(triggerUserChange: triggerUserChange, triggerDisplayChange: triggerDisplayChange);
     } else {
       content = const Text('Unknown State'); // Default for any undefined states
     }
@@ -106,7 +108,7 @@ class LoginContent extends StatelessWidget {
               shape: const BeveledRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(5)),),
               padding: const EdgeInsets.symmetric(horizontal: 80, vertical: 20),
             ),
-            child: Text('Login', style: TextStyle(color: Colors.white)),
+            child: const Text('Login', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -125,15 +127,15 @@ class ForumContent extends StatelessWidget {
         height: double.infinity,
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Color.fromARGB(255, 255, 166, 42),
+          color: const Color.fromARGB(255, 255, 166, 42),
           borderRadius: BorderRadius.circular(20), // Rounded corners
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween, // Space the elements apart
           children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0), // Padding around the text
-              child: const Text(
+            const Padding(
+              padding: EdgeInsets.all(16.0), // Padding around the text
+              child: Text(
                 'this is an example of what a post will look like if it were to be here',
                 style: TextStyle(
                   color: Colors.white,
@@ -182,15 +184,15 @@ class CommentContent extends StatelessWidget {
         height: double.infinity,
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Color.fromARGB(255, 255, 166, 42),
+          color: const Color.fromARGB(255, 255, 166, 42),
           borderRadius: BorderRadius.circular(20), // Rounded corners
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween, // Space the elements apart
           children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0), // Padding around the text
-              child: const Text(
+            const Padding(
+              padding: EdgeInsets.all(16.0), // Padding around the text
+              child: Text(
                 'this is an example of what a post will look like if it were to be here',
                 style: TextStyle(
                   color: Colors.white,
@@ -223,6 +225,68 @@ class CommentContent extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class AccountContent extends StatelessWidget {
+  final Function(UserType) triggerUserChange;
+  final Function(DisplayStates) triggerDisplayChange;
+
+  const AccountContent({super.key, required this.triggerUserChange, required this.triggerDisplayChange});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Placeholder for user account image
+          const CircleAvatar(
+            radius: 50,
+            backgroundImage: AssetImage('assets/images/placeholder_user.png'), // Ensure this image exists
+          ),
+          const SizedBox(height: 16),
+
+          // Username
+          const Text(
+            'Username: JohnDoe',
+            style: TextStyle(fontSize: 18, color: Colors.black),
+          ),
+          const SizedBox(height: 8),
+
+          // Account Created Date
+          const Text(
+            'Account Created: Jan 1, 2020',
+            style: TextStyle(fontSize: 16, color: Colors.black54),
+          ),
+          const SizedBox(height: 8),
+
+          // Account Info
+          const Text(
+            'Account Info: This is a sample account.',
+            style: TextStyle(fontSize: 16, color: Colors.black54),
+          ),
+          const SizedBox(height: 16),
+
+          // Logout Button
+          Align(
+            alignment: Alignment.topLeft,
+            child: ElevatedButton(
+              onPressed: () {
+                triggerUserChange(UserType.loggedOut);
+                triggerDisplayChange(DisplayStates.login);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+              ),
+              child: const Text('Logout', style: TextStyle(color: Colors.white)),
+            ),
+          ),
+        ],
       ),
     );
   }

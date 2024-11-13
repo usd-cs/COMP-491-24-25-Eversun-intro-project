@@ -11,7 +11,7 @@ class BottomSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      flex: 13, // 13% of screen height
+      flex: 5, // 13% of screen height
       child: Container(
         color: const Color.fromARGB(255, 255, 166, 42),
         child: BottomContent(userType: userType, triggerDisplayChange: triggerDisplayChange), 
@@ -28,90 +28,69 @@ class BottomContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        if (userType == UserType.loggedOut) ...[
-          BottomButton( //Login - LoggedOut User
+    return Container(
+      color: Colors.white, // Background color for the navigation bar
+      padding: const EdgeInsets.symmetric(vertical: 4.0), // Padding for the bar
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround, // Evenly space the buttons
+        children: [
+          BottomButton(
             relativePath: 'assets/images/UserLoggedIn.png',
-            action: () => triggerDisplayChange(DisplayStates.login),
+            action: () => triggerDisplayChange(DisplayStates.account),
+            label: 'Account',
           ),
-        ] else if (userType == UserType.loggedIn) ...[
-          BottomButton( //Logout - loggedIn User
-            relativePath: 'assets/images/UserLoggedIn.png',
-            action: () => triggerDisplayChange(DisplayStates.login),
+          BottomButton(
+            relativePath: 'assets/images/Home.png',
+            action: () => triggerDisplayChange(DisplayStates.forum),
+            label: 'Home',
           ),
-          BottomButton( //Post - loggedIn User
-            relativePath: 'assets/images/Post.png',
+          BottomButton(
+            relativePath: 'assets/images/BackArrow.png',
             action: () {
-              print("post button pressed");
+              print("swipe left button pressed");
             },
+            label: 'Swipe Left',
           ),
-        ] else ...[
-          BottomButton( //Logout - admin User
-            relativePath: 'assets/images/UserLoggedIn.png',
-            action:  () => triggerDisplayChange(DisplayStates.login),
-          ),
-          BottomButton( //Remove - admin User
-            relativePath: 'assets/images/Remove.png',
+          BottomButton(
+            relativePath: 'assets/images/ForwardArrow.png',
             action: () {
-              print("remove button pressed");
+              print("swipe right button pressed");
             },
+            label: 'Swipe Right',
           ),
         ],
-        // Static buttons for all user types
-        BottomButton( //Home
-          relativePath: 'assets/images/Home.png',
-          action: () => triggerDisplayChange(DisplayStates.forum),
-        ),
-        BottomButton( //Back
-          relativePath: 'assets/images/BackArrow.png',
-          action: () {
-            print("back button pressed");
-          },
-        ),
-        BottomButton( //Forward
-          relativePath: 'assets/images/ForwardArrow.png',
-          action: () {
-            print("forward button pressed");
-          },
-        ),
-      ],
+      ),
     );
   }
 }
 //a generic button template used by all buttons
 class BottomButton extends StatelessWidget {
   final String relativePath;
-  final Function action;
+  final VoidCallback action;
+  final String label;
 
   const BottomButton({
     super.key,
     required this.relativePath,
     required this.action,
+    required this.label,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: OutlinedButton(
-        onPressed: () => action(),
-        style: OutlinedButton.styleFrom(
-          backgroundColor: Colors.transparent, // Transparent background
-          shape: const BeveledRectangleBorder(borderRadius: BorderRadius.zero,),
-          
-          side: const BorderSide(
-            color: Colors.white, // Outline color set to white
-            width: 1, // Set outline width
-          ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          icon: Image.asset(relativePath, color: const Color.fromARGB(255, 255, 166, 42)), // Orange icon color
+          iconSize: 5.0, // Smaller icon size
+          onPressed: action,
         ),
-        child: Center(
-          child: Image.asset(
-              relativePath,
-              height: 30,
-              width: 30,
-            ),
+        Text(
+          label,
+          style: const TextStyle(color: Color.fromARGB(255, 255, 166, 42), fontSize: 10.0), // Orange label styling
         ),
-      ),
+      ],
     );
   }
 }
