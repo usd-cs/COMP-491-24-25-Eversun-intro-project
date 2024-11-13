@@ -1,52 +1,41 @@
-from flask import Flask
-import os
-import psycopg2
-import time
+from flask import Flask, abort
+from datetime import datetime
 import json
-import init.sql
 
+import sqlalchemy
+from sqlalchemy import orm
+
+from models import db
 from models import User
 from models import Post
 from models import Comment
 
-def get_db_connection():
-    connection = psycopg2.connect(host='localhost', 
-                                database=' database_name', 
-                                user=os.environ['DB_USERNAME'], 
-                                password=os.environ['DB_PASSWORD'])
-    return connection
-
-
 from flask import request
 app = Flask(__name__)
 
-#add in some of john's code here - it is related to connection to the database, for importing classes
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://user:password@hostname"
+# TODO: Pull this info from environment variables
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:changeme@db"
 db.init_app(app)
 with app.app_context():
     db.reflect()
 
 #@app.route('/')
-#TO_DO: Need to check authentication
-@app.route('/getonepost', methods=['GET'])
-def getonepost():
+#TODO: Need to check authentication
+@app.route('/v1/post/<int:id>', methods=['GET'])
+def getonepost(id):
     print('Received GET message\n')
-    post_id = request.form.get('postid')
-    return view_single_post(post_id)
+    return view_single_post(id)
 
-@app.route('/getallposts', methods=['GET'])
+@app.route('/v1/posts', methods=['GET'])
 def getallposts():
     return view_posts()
     
 
-@app.route('/createpost', methods=['POST'])
+@app.route('/v1/post/create', methods=['POST'])
 def createpost():
-    command = request.form.get(command)
-    my_post = request.form.get('mypost')
+    my_post = request.form.get('content')
     user_id = request.form.get('userid')
-    timestamp = time.time()
-    #post_id = random.randomint(0,1000000) #generating a random number is temp, replace with unique post id, 
-                                                    #requires persisting latest post id and incrementing
+    timestamp = datetime.now()
     print(my_post, user_id, timestamp)
     #print(request.form.get('mypost'),request.form.get('userid'))
             
@@ -54,12 +43,11 @@ def createpost():
 
 
 
-@app.route('/createcomment', methods=['POST'])
-def createcomment(): 
-    my_comment = request.form.get('mycomment')
+@app.route('/v1/post/<int: post_id>/comment/create', methods=['POST'])
+def createcomment(post_id): 
+    my_comment = request.form.get('content')
     user_id = request.form.get('userid')
-    post_id = request.form.get('postid')
-    timestamp = time.time()
+    timestamp = datetime.now()
     #comment_id = random.randomint(0,1000000) #generating a random number is temp, replace with unique post id, 
                                                     #requires persisting latest post id and incrementing
     print(my_comment, user_id, timestamp, post_id)
@@ -67,79 +55,87 @@ def createcomment():
             
     return insert_single_comment(my_comment, user_id, timestamp, post_id)
 
+@app.route('/v1/post/<int: post_id>/comment/<int: comment_id>', methods=['GET'])
+def getcomment(post_id, comment_id):
+    print(post_id, comment_id)
+    return get_single_comment(post_id, comment_id)
 
-@app.route('/deletepost',methods=['POST'])
-def deletepost():  
-    user_id = request.form.get('userid')
-    post_id = request.form.get('postid')
-    print(user_id, post_id)
+@app.route('/v1/post/delete/<int:id>',methods=['DELETE'])
+def deletepost(id):  
+    print(user_id, id)
     #print(request.form.get('mypost'),request.form.get('userid'))
             
-    return delete_single_post(user_id,post_id)
+    return delete_single_post(user_id,id)
             
 
-@app.route('/deletecomment',methods=['POST'])
-def deletecomment():
-
-    user_id = request.form.get('userid')
-    comment_id = request.form.get('commentid')
-    print(user_id, comment_id)
+@app.route('/v1/post/<int: post_id>/comment/delete/<int:id>',methods=['DELETE'])
+def deletecomment(post_id, id):
+    _ = post_id
+    user_id = request.form.get('')
+    print(user_id, id)
     #print(request.form.get('mypost'),request.form.get('userid'))
             
-    return delete_single_comment(user_id,comment_id)
+    return delete_single_comment(id)
 
-    
-def delete_single_comment(user_id, comment_id):
-    connection = get_db_connection()
-    cur = connection.cursor()
-    cur = connection.cursor()
-    cur.execute('DELETE FROM comments WHERE id = ?'
-                (comment_id,))
-    print("Deleted single post from database")
-    return "Deleted single post from database"
-    
-def delete_single_post(user_id, post_id):
-    connection = get_db_connection()
-    cur = connection.cursor()
-    cur = connection.cursor()
-    cur.execute('DELETE FROM posts WHERE id = ?'
-                (post_id,))
-    print("Deleted single post from database")
-    return "Deleted single post from database"
+
+def get_single_comment(post_id, comment_id):
+    _ = post_id
+    try:
+        comment = db.session.execute(db.select(Comment).where(Comment.id == comment_id)).scalar_one()
+        return comment.to_json()
+    except:
+        abort(404)
+
+def delete_single_comment(comment_id):
+    try:
+        comment = db.session.get_one(Comment, comment_id)
+        db.session.delete(comment)
+        db.session.commit()
+        return json.dumps({'success':True}), 200, {'ContentType':'application/json'}
+    except sqlalchemy.orm.exc.NoResultFound:
+        abort(404)
+
+def delete_single_post(_, post_id):
+    try:
+        post = db.session.get_one(Post, post_id)
+        db.session.delete(post)
+        db.session.commit()
+        return json.dumps({'success':True}), 200, {'ContentType':'application/json'}
+    except sqlalchemy.orm.exc.NoResultFound:
+        abort(404)
     
 
     
 def insert_single_comment(my_comment, user_id, timestamp, post_id):
-    connection = get_db_connection()
-    cur = connection.cursor()
-    comment_id = cur.execute('SELECT nextval(init.sql.comment_id_seq)').fetchone()
-    cur.execute('INSERT INTO comments (id,contents,user_id, post_id, created_at)'
-                        'VALUES(%d,%s,%d,%d,%f)',
-                        comment_id, my_comment, user_id, post_id, timestamp)
-    cur.close()
-    connection.close()
-    print("Inserted single post into database")
-    return "Inserted single post into database"
+    comment = Comment(
+        contents=my_comment,
+        user_id=user_id,
+        post_id=post_id,
+        created_at=timestamp,
+    )
+    db.session.add(comment)
+    db.session.commit()
+    
+    db.session.refresh(comment)
+
+    print("Inserted single comment into database")
+    return json.dumps({'success':True, 'comment_id':comment.id}), 200, {'ContentType':'application/json'}
 
 def insert_single_post(my_post, user_id, timestamp):
-    connection = get_db_connection()
-    cur = connection.cursor()
-    post_id = cur.execute('SELECT nextval(init.sql.post_id_seq)').fetchone()
-    cur.execute('INSERT INTO posts (id,contents,user_id,created_at)'
-                        'VALUES(%d,%s,%d,%f)',
-                        post_id, my_post, user_id, timestamp)
-    cur.close()
-    connection.close()
+    post = Post(
+        contents=my_post,
+        user_id=user_id,
+        created_at=timestamp
+    )
+    db.session.add(post)
+    db.session.commit()
+    db.session.refresh(post)
     print("Inserted single post into database")
-    return "Inserted single post into database"
+    return json.dumps({'success':True, 'comment_id':post.id}), 200, {'ContentType':'application/json'}
     
 
 def view_posts():
-    connection = get_db_connection()
-    cur = connection.cursor()
-    posts = cur.execute('SELECT * FROM posts').fetchall()
-    cur.close()
-    connection.close()
+    posts = db.session.execute(db.select(Post).order_by(Post.created_at)).mappings().all()
     json_string = json.dumps(posts, indent=4)
     return json_string
     #return render_template('index.html', posts=posts)
@@ -147,12 +143,6 @@ def view_posts():
 
 
 def view_single_post(post_id):
-    connection = get_db_connection()
-    cur = connection.cursor()
-    post = cur.execute('SELECT * FROM posts WHERE id = ?',
-                        (post_id,)).fetchone()
-    cur.close()
-    connection.close()
     json_string = json.dumps(post, indent=4)
     #if post is None:
         #abort(404)
