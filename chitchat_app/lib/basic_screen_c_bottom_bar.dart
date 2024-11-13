@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'state_machine.dart';
 
-// Bottom Section of the Screen
+// BottomSection is the bottom part of the screen, typically containing navigation or action buttons.
 class BottomSection extends StatelessWidget {
   final UserType userType;
   final Function(DisplayStates) triggerDisplayChange;
@@ -11,7 +11,7 @@ class BottomSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      flex: 13, // 13% of screen height
+      flex: 1, // 13% of screen height
       child: Container(
         color: const Color.fromARGB(255, 255, 166, 42),
         child: BottomContent(userType: userType, triggerDisplayChange: triggerDisplayChange), 
@@ -19,7 +19,8 @@ class BottomSection extends StatelessWidget {
     );
   }
 }
-//creates all the buttons in the row (changes for the state the user is in)
+
+// BottomContent provides the actual content of the BottomSection, such as navigation icons.
 class BottomContent extends StatelessWidget {
   final UserType userType;
   final Function(DisplayStates) triggerDisplayChange;
@@ -28,90 +29,76 @@ class BottomContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        if (userType == UserType.loggedOut) ...[
-          BottomButton( //Login - LoggedOut User
-            relativePath: 'assets/images/UserLoggedIn.png',
-            action: () => triggerDisplayChange(DisplayStates.login),
+    final double iconSize = MediaQuery.of(context).size.width * 0.1; 
+
+    return Container(
+      color: Colors.white, // Background color for the navigation bar
+      padding: const EdgeInsets.symmetric(vertical: 2.0), 
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround, 
+        children: [
+          IconButton(
+            icon: Icon(Icons.account_circle, color: Colors.amber[800]),
+            onPressed: () => triggerDisplayChange(DisplayStates.account),
+            iconSize: iconSize,
           ),
-        ] else if (userType == UserType.loggedIn) ...[
-          BottomButton( //Logout - loggedIn User
-            relativePath: 'assets/images/UserLoggedIn.png',
-            action: () => triggerDisplayChange(DisplayStates.login),
+          IconButton(
+            icon: Icon(Icons.home, color: Colors.amber[800]),
+            onPressed: () => triggerDisplayChange(DisplayStates.forum),
+            iconSize: iconSize,
           ),
-          BottomButton( //Post - loggedIn User
-            relativePath: 'assets/images/Post.png',
-            action: () {
-              print("post button pressed");
+          IconButton(
+            icon: Icon(Icons.arrow_back, color: Colors.amber[800]),
+            onPressed: () {
+              print("Swipe left button pressed");
             },
+            iconSize: iconSize,
           ),
-        ] else ...[
-          BottomButton( //Logout - admin User
-            relativePath: 'assets/images/UserLoggedIn.png',
-            action:  () => triggerDisplayChange(DisplayStates.login),
-          ),
-          BottomButton( //Remove - admin User
-            relativePath: 'assets/images/Remove.png',
-            action: () {
-              print("remove button pressed");
+          IconButton(
+            icon: Icon(Icons.arrow_forward, color: Colors.amber[800]),
+            onPressed: () {
+              print("Swipe right button pressed");
             },
+            iconSize: iconSize,
           ),
         ],
-        // Static buttons for all user types
-        BottomButton( //Home
-          relativePath: 'assets/images/Home.png',
-          action: () => triggerDisplayChange(DisplayStates.forum),
-        ),
-        BottomButton( //Back
-          relativePath: 'assets/images/BackArrow.png',
-          action: () {
-            print("back button pressed");
-          },
-        ),
-        BottomButton( //Forward
-          relativePath: 'assets/images/ForwardArrow.png',
-          action: () {
-            print("forward button pressed");
-          },
-        ),
-      ],
+      ),
     );
   }
 }
-//a generic button template used by all buttons
+
+// BottomButton is a reusable widget for buttons in the BottomContent, providing a consistent style.
 class BottomButton extends StatelessWidget {
   final String relativePath;
-  final Function action;
+  final VoidCallback action;
+  final String label;
 
   const BottomButton({
     super.key,
     required this.relativePath,
     required this.action,
+    required this.label,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: OutlinedButton(
-        onPressed: () => action(),
-        style: OutlinedButton.styleFrom(
-          backgroundColor: Colors.transparent, // Transparent background
-          shape: const BeveledRectangleBorder(borderRadius: BorderRadius.zero,),
-          
-          side: const BorderSide(
-            color: Colors.white, // Outline color set to white
-            width: 1, // Set outline width
-          ),
+    // Use MediaQuery to get screen size and adjust sizes dynamically
+    double iconSize = MediaQuery.of(context).size.width * 0.08; // 8% of screen width
+    double fontSize = MediaQuery.of(context).size.width * 0.035; // 3.5% of screen width
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          icon: Image.asset(relativePath, color: const Color.fromARGB(255, 255, 166, 42)), // Orange icon color
+          iconSize: iconSize, // Dynamically adjusted icon size
+          onPressed: action,
         ),
-        child: Center(
-          child: Image.asset(
-              relativePath,
-              height: 30,
-              width: 30,
-            ),
+        Text(
+          label,
+          style: TextStyle(color: const Color.fromARGB(255, 255, 166, 42), fontSize: fontSize), // Dynamically adjusted font size
         ),
-      ),
+      ],
     );
   }
 }
