@@ -1,14 +1,19 @@
 from flask import Flask
+import os
 import psycopg2
-import random
 import time
 import json
+import init.sql
+
+from models import User
+from models import Post
+from models import Comment
 
 def get_db_connection():
     connection = psycopg2.connect(host='localhost', 
-                                  database=' database_name', 
-                                  user=os.environ['DB_USERNAME'], 
-                                  password=os.environ['DB_PASSWORD'])
+                                database=' database_name', 
+                                user=os.environ['DB_USERNAME'], 
+                                password=os.environ['DB_PASSWORD'])
     return connection
 
 
@@ -16,6 +21,10 @@ from flask import request
 app = Flask(__name__)
 
 #add in some of john's code here - it is related to connection to the database, for importing classes
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://user:password@hostname"
+db.init_app(app)
+with app.app_context():
+    db.reflect()
 
 #@app.route('/')
 #TO_DO: Need to check authentication
@@ -36,12 +45,12 @@ def createpost():
     my_post = request.form.get('mypost')
     user_id = request.form.get('userid')
     timestamp = time.time()
-    post_id = random.randomint(0,1000000) #generating a random number is temp, replace with unique post id, 
+    #post_id = random.randomint(0,1000000) #generating a random number is temp, replace with unique post id, 
                                                     #requires persisting latest post id and incrementing
-    print(my_post, user_id, timestamp, post_id)
+    print(my_post, user_id, timestamp)
     #print(request.form.get('mypost'),request.form.get('userid'))
             
-    return insert_single_post(my_post, user_id, timestamp, post_id)
+    return insert_single_post(my_post, user_id, timestamp)
 
 
 
@@ -51,12 +60,12 @@ def createcomment():
     user_id = request.form.get('userid')
     post_id = request.form.get('postid')
     timestamp = time.time()
-    comment_id = random.randomint(0,1000000) #generating a random number is temp, replace with unique post id, 
+    #comment_id = random.randomint(0,1000000) #generating a random number is temp, replace with unique post id, 
                                                     #requires persisting latest post id and incrementing
-    print(my_comment, user_id, timestamp, post_id, comment_id)
+    print(my_comment, user_id, timestamp, post_id)
     #print(request.form.get('mypost'),request.form.get('userid'))
             
-    return insert_single_comment(my_comment, user_id, timestamp, post_id, comment_id)
+    return insert_single_comment(my_comment, user_id, timestamp, post_id)
 
 
 @app.route('/deletepost',methods=['POST'])
@@ -87,7 +96,7 @@ def delete_single_comment(user_id, comment_id):
     cur.execute('DELETE FROM comments WHERE id = ?'
                 (comment_id,))
     print("Deleted single post from database")
-    return True
+    return "Deleted single post from database"
     
 def delete_single_post(user_id, post_id):
     connection = get_db_connection()
@@ -96,29 +105,33 @@ def delete_single_post(user_id, post_id):
     cur.execute('DELETE FROM posts WHERE id = ?'
                 (post_id,))
     print("Deleted single post from database")
-    return True
+    return "Deleted single post from database"
     
 
     
-def insert_single_comment(my_comment, user_id, timestamp, post_id, comment_id):
+def insert_single_comment(my_comment, user_id, timestamp, post_id):
     connection = get_db_connection()
     cur = connection.cursor()
-    cur = connection.cursor()
+    comment_id = cur.execute('SELECT nextval(init.sql.comment_id_seq)').fetchone()
     cur.execute('INSERT INTO comments (id,contents,user_id, post_id, created_at)'
                         'VALUES(%d,%s,%d,%d,%f)',
                         comment_id, my_comment, user_id, post_id, timestamp)
+    cur.close()
+    connection.close()
     print("Inserted single post into database")
-    return True
+    return "Inserted single post into database"
 
-def insert_single_post(my_post, user_id, timestamp, post_id):
+def insert_single_post(my_post, user_id, timestamp):
     connection = get_db_connection()
     cur = connection.cursor()
-    cur = connection.cursor()
+    post_id = cur.execute('SELECT nextval(init.sql.post_id_seq)').fetchone()
     cur.execute('INSERT INTO posts (id,contents,user_id,created_at)'
                         'VALUES(%d,%s,%d,%f)',
                         post_id, my_post, user_id, timestamp)
+    cur.close()
+    connection.close()
     print("Inserted single post into database")
-    return True
+    return "Inserted single post into database"
     
 
 def view_posts():
@@ -141,8 +154,8 @@ def view_single_post(post_id):
     cur.close()
     connection.close()
     json_string = json.dumps(post, indent=4)
-    if post is None:
-        abort(404)
+    #if post is None:
+        #abort(404)
     return json_string
 
 
@@ -153,7 +166,6 @@ def view_single_post(post_id):
 #Steps to do:
 #1) Unit tests
 #2) Authentication
-#3) Generating unique post id
 
 
 
