@@ -15,6 +15,8 @@ def get_db_connection():
 from flask import request
 app = Flask(__name__)
 
+#add in some of john's code here - it is related to connectiong to the database, for importing classes
+
 #@app.route('/')
 #TO_DO: Need to check authentication
 @app.route('/getonepost', methods=['GET'])
