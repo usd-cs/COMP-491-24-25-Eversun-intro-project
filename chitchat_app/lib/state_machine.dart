@@ -3,6 +3,7 @@ enum DisplayStates {
   login, 
   comment,
   account,
+  createPost,
 }
 
 enum UserType {
