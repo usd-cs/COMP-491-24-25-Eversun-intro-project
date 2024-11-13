@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+// CreatePostPage allows users to create a new post.
 class CreatePostPage extends StatefulWidget {
   const CreatePostPage({super.key});
 
@@ -12,6 +13,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
   String _title = '';
   String _content = '';
 
+  // _submitPost handles the submission of the post form.
   void _submitPost() {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'state_machine.dart';
 
-// Bottom Section of the Screen
+// BottomSection is the bottom part of the screen, typically containing navigation or action buttons.
 class BottomSection extends StatelessWidget {
   final UserType userType;
   final Function(DisplayStates) triggerDisplayChange;
@@ -19,6 +19,8 @@ class BottomSection extends StatelessWidget {
     );
   }
 }
+
+// BottomContent provides the actual content of the BottomSection, such as navigation icons.
 class BottomContent extends StatelessWidget {
   final UserType userType;
   final Function(DisplayStates) triggerDisplayChange;
@@ -27,13 +29,13 @@ class BottomContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double iconSize = MediaQuery.of(context).size.width * 0.1; // Adjust icon size
+    final double iconSize = MediaQuery.of(context).size.width * 0.1; 
 
     return Container(
       color: Colors.white, // Background color for the navigation bar
-      padding: const EdgeInsets.symmetric(vertical: 2.0), // Reduced padding for the bar
+      padding: const EdgeInsets.symmetric(vertical: 2.0), 
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround, // Evenly space the icons
+        mainAxisAlignment: MainAxisAlignment.spaceAround, 
         children: [
           IconButton(
             icon: Icon(Icons.account_circle, color: Colors.amber[800]),
@@ -65,7 +67,7 @@ class BottomContent extends StatelessWidget {
   }
 }
 
-//a generic button template used by all buttons
+// BottomButton is a reusable widget for buttons in the BottomContent, providing a consistent style.
 class BottomButton extends StatelessWidget {
   final String relativePath;
   final VoidCallback action;

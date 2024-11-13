@@ -9,6 +9,7 @@ void main() {
   runApp(const MyApp());
 }
 
+// MyApp is the root widget of the application.
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -20,6 +21,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
+// HomeScreen is the main screen of the application, containing other components.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -32,6 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
   UserType currentUserType = UserType.loggedOut;
   bool _showFAB = false; // Initially, do not show the FAB
 
+  // triggerDisplayChange updates the current display state and FAB visibility.
   void triggerDisplayChange(DisplayStates newState) {
     setState(() {
       currentDisplayState = newState;
@@ -40,6 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  // triggerUserChange updates the current user type and FAB visibility.
   void triggerUserChange(UserType newUserType) {
     setState(() {
       currentUserType = newUserType;
@@ -67,7 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       floatingActionButton: _showFAB ? Padding(
-        padding: const EdgeInsets.only(bottom: 50.0), // Move FAB up to avoid overlapping
+        padding: const EdgeInsets.only(bottom: 50.0), 
         child: FloatingActionButton(
           onPressed: () {
             Navigator.push(

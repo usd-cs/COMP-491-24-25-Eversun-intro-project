@@ -3,6 +3,7 @@ import 'state_machine.dart';
 import 'package:intl/intl.dart'; // For formatting dates
 import 'dart:math';
 
+// MiddleSection handles the display of different content based on the current state of the app.
 class MiddleSection extends StatelessWidget {
   final DisplayStates currentDisplayState;
   final Function(UserType) triggerUserChange;
@@ -13,6 +14,7 @@ class MiddleSection extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget content;
 
+    // Determine which content to display based on the current display state
     if (currentDisplayState == DisplayStates.login) {
       content = LoginContent(triggerUserChange: triggerUserChange, triggerDisplayChange: triggerDisplayChange);
     } else if (currentDisplayState == DisplayStates.forum) {
@@ -22,7 +24,7 @@ class MiddleSection extends StatelessWidget {
     } else if (currentDisplayState == DisplayStates.account) {
       content = AccountContent(triggerUserChange: triggerUserChange, triggerDisplayChange: triggerDisplayChange);
     } else {
-      content = const Text('Unknown State'); // Default for any undefined states
+      content = const Text('Unknown State'); 
     }
 
     return Expanded(
@@ -35,18 +37,16 @@ class MiddleSection extends StatelessWidget {
   }
 }
 
-
-
+// LoginContent provides UI for user login.
 class LoginContent extends StatelessWidget {
   final Function(UserType) triggerUserChange;
   final Function(DisplayStates) triggerDisplayChange;
   const LoginContent({super.key, required this.triggerUserChange, required this.triggerDisplayChange});
-  
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16.0), // Add some padding around the content
+      padding: const EdgeInsets.all(16.0), 
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -63,7 +63,7 @@ class LoginContent extends StatelessWidget {
             ),
             keyboardType: TextInputType.text,
           ),
-          const SizedBox(height: 16), // Add space between the fields
+          const SizedBox(height: 16), 
 
           // Password TextField
           const TextField(
@@ -104,7 +104,7 @@ class LoginContent extends StatelessWidget {
   }
 }
 
-
+// ForumContent displays a forum post.
 class ForumContent extends StatefulWidget {
   const ForumContent({super.key});
 
@@ -123,6 +123,7 @@ class _ForumContentState extends State<ForumContent> {
     generateRandomPost();
   }
 
+  // Generates a random post for display
   void generateRandomPost() {
     final List<String> usernames = ["Alice", "Bob", "Charlie", "Diana"];
     final List<String> contents = [
@@ -266,6 +267,7 @@ class CommentContent extends StatelessWidget {
   }
 }
 
+// AccountContent provides UI for displaying user account information.
 class AccountContent extends StatelessWidget {
   final Function(UserType) triggerUserChange;
   final Function(DisplayStates) triggerDisplayChange;
