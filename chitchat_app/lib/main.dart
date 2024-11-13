@@ -60,33 +60,33 @@ class _MainPageState extends State<MainPage> {
         TextEditingController titleController = TextEditingController();
         TextEditingController contentController = TextEditingController();
         return AlertDialog(
-          title: Text('Create Post'),
+          title: const Text('Create Post'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               // Text field for post title
               TextField(
                 controller: titleController,
-                decoration: InputDecoration(labelText: 'Post Title'),
+                decoration: const InputDecoration(labelText: 'Post Title'),
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               // Text field for post content
               TextField(
                 controller: contentController,
-                decoration: InputDecoration(labelText: 'Post Content'),
+                decoration: const InputDecoration(labelText: 'Post Content'),
                 maxLines: 5,
               ),
             ],
           ),
           actions: <Widget>[
             TextButton(
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
               onPressed: () {
                 Navigator.of(context).pop(); // Closes dialog.
               },
             ),
             TextButton(
-              child: Text('Submit'),
+              child: const Text('Submit'),
               onPressed: () {
                 // Checks if fields are non-empty before adding post
                 if (titleController.text.isNotEmpty &&
@@ -159,12 +159,12 @@ class _MainPageState extends State<MainPage> {
         actions: [
           if (isLoggedIn)
             IconButton(
-              icon: Icon(Icons.logout),
+              icon: const Icon(Icons.logout),
               onPressed: _logout,
             )
           else
             IconButton(
-              icon: Icon(Icons.login),
+              icon: const Icon(Icons.login),
               onPressed: _showLoginDialog,
             ),
         ],
@@ -189,8 +189,8 @@ class _MainPageState extends State<MainPage> {
       floatingActionButton: isLoggedIn
           ? FloatingActionButton(
               onPressed: _showCreatePostDialog,
-              child: Icon(Icons.add),
               backgroundColor: Colors.orange,
+              child: Icon(Icons.add),
             )
           : null,
     );
@@ -203,31 +203,31 @@ class _MainPageState extends State<MainPage> {
         TextEditingController usernameController = TextEditingController();
         TextEditingController passwordController = TextEditingController();
         return AlertDialog(
-          title: Text('Login'),
+          title: const Text('Login'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: usernameController,
-                decoration: InputDecoration(labelText: 'Username'),
+                decoration: const InputDecoration(labelText: 'Username'),
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               TextField(
                 controller: passwordController,
-                decoration: InputDecoration(labelText: 'Password'),
+                decoration: const InputDecoration(labelText: 'Password'),
                 obscureText: true,
               ),
             ],
           ),
           actions: <Widget>[
             TextButton(
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
-              child: Text('Login'),
+              child: const Text('Login'),
               onPressed: () {
                 String username = usernameController.text;
                 String password = passwordController.text;
@@ -241,7 +241,7 @@ class _MainPageState extends State<MainPage> {
                 } else {
                   // Show error message
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Invalid credentials')),
+                    const SnackBar(content: Text('Invalid credentials')),
                   );
                 }
               },
@@ -272,22 +272,22 @@ class AccountPage extends StatelessWidget {
       padding: const EdgeInsets.all(8),
       children: [
         // Displays a default profile picture.
-        CircleAvatar(
+        const CircleAvatar(
           radius: 50,
           backgroundImage: AssetImage('assets/default_profile.png'),
         ),
-        SizedBox(height: 16),
-        Text(
+        const SizedBox(height: 16),
+        const Text(
           'Username: user123',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
-        SizedBox(height: 8),
-        Text(
+        const SizedBox(height: 8),
+        const Text(
           'Account Created: 01/01/2023',
           style: TextStyle(fontSize: 16, color: Colors.grey),
         ),
-        SizedBox(height: 16),
-        Text(
+        const SizedBox(height: 16),
+        const Text(
           'Recent Posts',
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
@@ -420,7 +420,7 @@ class PostCard extends StatelessWidget {
   final bool isAdmin;
   final Random random = Random();
 
-  PostCard({this.title, this.content, this.username, this.comments, this.isAdmin = false});
+  PostCard({super.key, this.title, this.content, this.username, this.comments, this.isAdmin = false});
 
   @override
   Widget build(BuildContext context) {
@@ -436,29 +436,29 @@ class PostCard extends StatelessWidget {
               children: [
                 Text(
                   username ?? "Anonymous",
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 Text(
                   _randomDate(),
-                  style: TextStyle(color: Colors.grey),
+                  style: const TextStyle(color: Colors.grey),
                 ),
               ],
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               title ?? "Untitled",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(content ?? "No content"),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Align(
               alignment: Alignment.centerRight,
               child: ElevatedButton(
                 onPressed: () {
                   _showCommentsDialog(context);
                 },
-                child: Text('View Comments'),
+                child: const Text('View Comments'),
               ),
             ),
             if (isAdmin)
@@ -469,10 +469,10 @@ class PostCard extends StatelessWidget {
                     // Delete post logic
                     AccountPage.recentPosts.removeWhere((post) => post['title'] == title);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Post deleted')),
+                      const SnackBar(content: Text('Post deleted')),
                     );
                   },
-                  child: Text('Delete Post', style: TextStyle(color: Colors.red)),
+                  child: const Text('Delete Post', style: TextStyle(color: Colors.red)),
                 ),
               ),
           ],
@@ -496,7 +496,7 @@ class PostCard extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Comments'),
+          title: const Text('Comments'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -509,15 +509,15 @@ class PostCard extends StatelessWidget {
                         children: [
                           Text(
                             comment['username']!,
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           Text(
                             comment['date']!,
-                            style: TextStyle(color: Colors.grey),
+                            style: const TextStyle(color: Colors.grey),
                           ),
                         ],
                       ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Text(comment['content']!),
                       if (isAdmin)
                         Align(
@@ -528,31 +528,31 @@ class PostCard extends StatelessWidget {
                               comments?.remove(comment);
                               Navigator.of(context).pop();
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Comment deleted')),
+                                const SnackBar(content: Text('Comment deleted')),
                               );
                             },
-                            child: Text('Delete Comment', style: TextStyle(color: Colors.red)),
+                            child: const Text('Delete Comment', style: TextStyle(color: Colors.red)),
                           ),
                         ),
-                      Divider(),
+                      const Divider(),
                     ],
                   )),
               // Input field for adding a new comment.
               TextField(
                 controller: commentController,
-                decoration: InputDecoration(labelText: 'Add a comment'),
+                decoration: const InputDecoration(labelText: 'Add a comment'),
               ),
             ],
           ),
           actions: <Widget>[
             TextButton(
-              child: Text('Back'),
+              child: const Text('Back'),
               onPressed: () {
                 Navigator.of(context).pop(); // Closes dialog.
               },
             ),
             TextButton(
-              child: Text('Submit'),
+              child: const Text('Submit'),
               onPressed: () {
                 if (commentController.text.isNotEmpty) {
                   comments?.add({
