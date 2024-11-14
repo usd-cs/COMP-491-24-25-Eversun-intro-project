@@ -34,6 +34,20 @@ def login():
     password = request.form.get("password")
     return validate_user(email, password)
 
+@app.route('/v1/user/logout', methods=["GET"])
+def logout():
+    
+    email = session.get("email")
+    print(session)
+    if email is None:
+        abort(404)
+
+    session.pop("email", None)
+    session.pop("is_admin", None)
+    session.pop("user_id", None)
+
+    return str(json.dumps({"status":"success"})), 200, {'ContentType':'application/json'}
+
 #@app.route('/')
 #TODO: Need to check authentication
 @app.route('/v1/post/<int:id>', methods=['GET'])
