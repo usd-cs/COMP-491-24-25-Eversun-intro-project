@@ -19,47 +19,55 @@ class PostCard extends StatefulWidget {
 
 class _PostCardState extends State<PostCard> {
   Random random = Random();
+  bool _isVisible = true;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(widget.username ?? "Anonymous", style: TextStyle(fontWeight: FontWeight.bold)),
-            Text(widget.content ?? ""),
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerRight,
-              child: ElevatedButton(
-                onPressed: () {
-                  _showCommentsDialog(context);
-                },
-                child: const Text('View Comments'),
+    return Visibility(
+      visible: _isVisible,
+      child: Card(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(widget.username ?? "Anonymous", style: TextStyle(fontWeight: FontWeight.bold)),
+              Text(widget.content ?? ""),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      _showCommentsDialog(context);
+                    },
+                    child: const Text('View Comments'),
+                  ),
+                  if (isAdmin) ...[
+                    const SizedBox(width: 8),
+                    TextButton(
+                      onPressed: () {
+                        AccountPage.recentPosts.removeWhere((post) => 
+                            post['content'] == widget.content && 
+                            post['username'] == widget.username);
+                        
+                        setState(() {
+                          _isVisible = false;
+                        });
+                        
+                        widget.onDelete?.call();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Post deleted')),
+                        );
+                      },
+                      child: const Text('Delete Post', style: TextStyle(color: Colors.red)),
+                    ),
+                  ],
+                ],
               ),
-            ),
-            if (isAdmin)
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () {
-                    setState(() {
-                      AccountPage.recentPosts.removeWhere((post) => 
-                          post['username'] == widget.username && 
-                          post['content'] == widget.content);
-                    });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Post deleted')),
-                    );
-                    widget.onDelete;
-                  },
-                  child: const Text('Delete Post', style: TextStyle(color: Colors.red)),
-                ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -97,6 +105,15 @@ class _PostCardState extends State<PostCard> {
                         onPressed: () {
                           setState(() {
                             widget.comments?.remove(comment);
+                            
+                            if (AccountPage.recentPosts.any((post) => 
+                                post['content'] == widget.content && 
+                                post['username'] == widget.username)) {
+                              final post = AccountPage.recentPosts.firstWhere((post) => 
+                                  post['content'] == widget.content && 
+                                  post['username'] == widget.username);
+                              post['comments'] = widget.comments;
+                            }
                           });
                           Navigator.of(context).pop();
                           ScaffoldMessenger.of(context).showSnackBar(

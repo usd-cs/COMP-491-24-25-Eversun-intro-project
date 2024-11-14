@@ -1,3 +1,5 @@
+// ignore_for_file: no_leading_underscores_for_local_identifiers
+
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'home_page.dart';
@@ -245,6 +247,7 @@ class _MainPageState extends State<MainPage> {
     setState(() {
       isLoggedIn = false;
       isAdmin = false;
+      
       // Navigate to the home page
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (context) => MainPage()),  // Navigate to MainPage

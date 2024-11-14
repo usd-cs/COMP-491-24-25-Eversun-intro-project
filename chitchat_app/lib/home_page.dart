@@ -14,23 +14,44 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   bool isLoggedIn = false;
   bool isAdmin = false;
+  List<Map<String, dynamic>> randomPosts = [];
+
+  @override
+  void initState() {
+    super.initState();
+    randomPosts = _generateRandomPosts();
+  }
+
+  void refreshPosts() {
+    setState(() {
+      // This will trigger a rebuild with the updated posts
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> randomPosts = _generateRandomPosts();
-
     return ListView.builder(
       padding: const EdgeInsets.all(8),
+      key: ValueKey(AccountPage.recentPosts.length + randomPosts.length),
       itemCount: AccountPage.recentPosts.length + randomPosts.length,
       itemBuilder: (BuildContext context, int index) {
         final post = index < AccountPage.recentPosts.length
             ? AccountPage.recentPosts[index]
             : randomPosts[index - AccountPage.recentPosts.length];
         return PostCard(
+          key: ValueKey('${post['username']}-${post['content']}'),
           content: post['content'],
           username: post['username'],
           comments: post['comments'],
-          onDelete: isLoggedIn ? () => setState(() {}) : null,
+          onDelete: isAdmin ? () {
+            setState(() {
+              if (index < AccountPage.recentPosts.length) {
+                AccountPage.recentPosts.removeAt(index);
+              } else {
+                randomPosts.removeAt(index - AccountPage.recentPosts.length);
+              }
+            });
+          } : null,
           onAddComment: isLoggedIn ? () => _handleAddComment(post) : null,
         );
       },
