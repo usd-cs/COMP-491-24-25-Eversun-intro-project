@@ -10,8 +10,9 @@ class PostCard extends StatefulWidget {
   final List<Map<String, String>>? comments;
   final VoidCallback? onDelete;
   final VoidCallback? onAddComment;
+  final int postId;
 
-  PostCard({super.key, this.content, this.username, this.comments, this.onDelete, this.onAddComment});
+  PostCard({super.key, this.content, this.username, this.comments, this.onDelete, this.onAddComment, required this.postId});
 
   @override
   _PostCardState createState() => _PostCardState();
@@ -48,15 +49,10 @@ class _PostCardState extends State<PostCard> {
                     const SizedBox(width: 8),
                     TextButton(
                       onPressed: () {
-                        AccountPage.recentPosts.removeWhere((post) => 
-                            post['content'] == widget.content && 
-                            post['username'] == widget.username);
-                        
+                        widget.onDelete?.call();
                         setState(() {
                           _isVisible = false;
                         });
-                        
-                        widget.onDelete?.call();
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Post deleted')),
                         );

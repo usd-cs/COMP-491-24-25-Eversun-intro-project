@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'post_card.dart';
 import 'services/post_service.dart';
 import 'services/user_service.dart';
-import 'query_attempts.dart';
+
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required List posts});
@@ -19,6 +19,12 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _loadPosts();
+  }
+
+  @override
+  void didUpdateWidget(HomePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _loadPosts(); // Reload posts when widget updates
   }
 
   Future<void> _loadPosts() async {
@@ -51,6 +57,7 @@ class _HomePageState extends State<HomePage> {
           return PostCard(
             content: post.content,
             username: post.username,
+            postId: post.postId,
             comments: post.comments.map((comment) => {
               'username': comment.username,
               'content': comment.content,
@@ -64,14 +71,29 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _handleAddComment(Post post) async {
-    // Add your comment dialog/logic here
     String commentContent = ""; // Get this from a dialog
-    await PostService.addComment(commentContent, int.parse(post.postId));
-    _loadPosts(); // Refresh the posts
+    await PostService.addComment(commentContent, post.postId);
+    _loadPosts();
   }
 
   Future<void> _handleDelete(Post post) async {
-    await deletePost(int.parse(post.postId));
-    _loadPosts(); // Refresh the posts
+    final success = await PostService.deletePost(post.postId);
+    if (success) {
+      _loadPosts();
+    }
+  }
+
+  Future<void> _handleDeleteComment(Post post, int commentId) async {
+    final success = await PostService.deleteComment(post.postId, commentId);
+    if (success) {
+      _loadPosts(); // Refresh the posts
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Comment deleted successfully')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to delete comment')),
+      );
+    }
   }
 }

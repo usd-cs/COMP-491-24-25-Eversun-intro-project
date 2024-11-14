@@ -5,6 +5,7 @@ import 'dart:math';
 import 'home_page.dart';
 import 'global_variables.dart';
 import 'account_page.dart';
+import 'services/post_service.dart';
 /// Main entry point of the application.
 void main() {
   runApp(const MyApp());
@@ -90,16 +91,15 @@ class _MainPageState extends State<MainPage> {
             ),
             TextButton(
               child: const Text('Submit'),
-              onPressed: () {
+              onPressed: () async {
                 if (contentController.text.isNotEmpty) {
+                  await PostService.createPost(contentController.text);
+                  
+                  // Refresh the HomePage
                   setState(() {
-                    AccountPage.recentPosts.insert(0, {
-                      'content': contentController.text,
-                      'username': currentUsername,
-                      'comments': <Map<String, String>>[]
-                    });
-                    _pages[1] = HomePage(posts: AccountPage.recentPosts); // Re-instantiate HomePage
+                    _pages[1] = HomePage(posts: const []);
                   });
+                  
                   Navigator.of(context).pop();
                 }
               },

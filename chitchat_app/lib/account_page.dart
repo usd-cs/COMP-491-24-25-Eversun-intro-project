@@ -39,6 +39,7 @@ class AccountPage extends StatelessWidget {
               content: post['content'],
               username: post['username'],
               comments: post['comments'],
+              postId: post['postId'] ?? 0,
             )),
       ],
     );
