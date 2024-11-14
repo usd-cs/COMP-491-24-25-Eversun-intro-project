@@ -65,7 +65,7 @@ class Post(db.Model):
                 "id": self.id,
                 "contents": self.contents,
                 "user_id": self.user_id,
-                "created_at": self.created_at
+                "created_at": str(self.created_at)
         }
         return json.dumps(column_map)
 
@@ -84,7 +84,7 @@ class Comment(db.Model):
                 "contents": self.contents,
                 "user_id": self.user_id,
                 "post_id": self.post_id,
-                "created_at": self.created_at
+                "created_at": str(self.created_at)
         }
         return json.dumps(column_map)
 

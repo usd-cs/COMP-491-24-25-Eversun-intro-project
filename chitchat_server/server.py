@@ -19,6 +19,10 @@ db.init_app(app)
 with app.app_context():
     db.reflect()
 
+@app.route("/")
+def sanity_check():
+    return "This works"
+
 #@app.route('/')
 #TODO: Need to check authentication
 @app.route('/v1/post/<int:id>', methods=['GET'])
@@ -43,7 +47,7 @@ def createpost():
 
 
 
-@app.route('/v1/post/<int: post_id>/comment/create', methods=['POST'])
+@app.route('/v1/post/<int:post_id>/comment/create', methods=['POST'])
 def createcomment(post_id): 
     my_comment = request.form.get('content')
     user_id = request.form.get('userid')
@@ -55,20 +59,18 @@ def createcomment(post_id):
             
     return insert_single_comment(my_comment, user_id, timestamp, post_id)
 
-@app.route('/v1/post/<int: post_id>/comment/<int: comment_id>', methods=['GET'])
+@app.route('/v1/post/<int:post_id>/comment/<int:comment_id>', methods=['GET'])
 def getcomment(post_id, comment_id):
     print(post_id, comment_id)
-    return get_single_comment(post_id, comment_id)
+    return get_single_comment(comment_id)
 
 @app.route('/v1/post/delete/<int:id>',methods=['DELETE'])
 def deletepost(id):  
-    print(user_id, id)
-    #print(request.form.get('mypost'),request.form.get('userid'))
-            
+    user_id = 1 # TODO: Get from cookie
     return delete_single_post(user_id,id)
             
 
-@app.route('/v1/post/<int: post_id>/comment/delete/<int:id>',methods=['DELETE'])
+@app.route('/v1/post/<int:post_id>/comment/delete/<int:id>',methods=['DELETE'])
 def deletecomment(post_id, id):
     _ = post_id
     user_id = request.form.get('')
@@ -78,8 +80,7 @@ def deletecomment(post_id, id):
     return delete_single_comment(id)
 
 
-def get_single_comment(post_id, comment_id):
-    _ = post_id
+def get_single_comment(comment_id):
     try:
         comment = db.session.execute(db.select(Comment).where(Comment.id == comment_id)).scalar_one()
         return comment.to_json()
@@ -131,22 +132,27 @@ def insert_single_post(my_post, user_id, timestamp):
     db.session.commit()
     db.session.refresh(post)
     print("Inserted single post into database")
-    return json.dumps({'success':True, 'comment_id':post.id}), 200, {'ContentType':'application/json'}
+    return json.dumps({'success':True, 'post_id':post.id}), 200, {'ContentType':'application/json'}
     
 
 def view_posts():
-    posts = db.session.execute(db.select(Post).order_by(Post.created_at)).mappings().all()
-    json_string = json.dumps(posts, indent=4)
-    return json_string
+    posts = db.session.execute(db.select(Post).order_by(Post.created_at)).scalars()
+    
+    post_list = []
+    for post in posts:
+        print(type(post))
+        post_list.append(post.to_json())
+    return str(post_list), 200, {'ContentType':'text/plain'}
     #return render_template('index.html', posts=posts)
 
 
 
 def view_single_post(post_id):
-    json_string = json.dumps(post, indent=4)
-    #if post is None:
-        #abort(404)
-    return json_string
+    try:
+        comment = db.session.execute(db.select(Post).where(Post.id == post_id)).scalar_one()
+        return comment.to_json()
+    except sqlalchemy.exc.NoResultFound:
+        abort(404)
 
 
 
@@ -158,5 +164,6 @@ def view_single_post(post_id):
 #2) Authentication
 
 
-
+if __name__ == "__main__":
+    app.run()
     
