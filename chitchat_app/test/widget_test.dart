@@ -58,7 +58,7 @@ void main() {
 
   group('HomePage Tests', () {
     testWidgets('Displays random posts correctly', (WidgetTester tester) async {
-      await tester.pumpWidget(createTestableWidget(const HomePage()));
+      await tester.pumpWidget(createTestableWidget(const HomePage(posts: [],)));
       await tester.pumpAndSettle();
       expect(find.byType(PostCard), findsWidgets);
     });

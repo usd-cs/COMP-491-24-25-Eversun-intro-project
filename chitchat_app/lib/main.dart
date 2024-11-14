@@ -23,7 +23,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange), // Sets color theme.
         useMaterial3: true,
       ),
-      home: const MainPage(), // Main page of the app.
+      home: MainPage(), // Main page of the app, now not a constant.
     );
   }
 }
@@ -46,7 +46,7 @@ class _MainPageState extends State<MainPage> {
     // Initialize _pages here where instance variables are accessible
     _pages = [
       AccountPage(username: currentUsername),
-      const HomePage(),
+      HomePage(posts: AccountPage.recentPosts),
     ];
   }
 
@@ -63,25 +63,17 @@ class _MainPageState extends State<MainPage> {
 
   /// Displays a dialog to create a new post with a title and content.
   void _showCreatePostDialog() {
-    if (!isLoggedIn) return; // Only allow post creation if logged in
+    if (!isLoggedIn) return;
 
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        TextEditingController titleController = TextEditingController();
         TextEditingController contentController = TextEditingController();
         return AlertDialog(
           title: const Text('Create Post'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Text field for post title
-              TextField(
-                controller: titleController,
-                decoration: const InputDecoration(labelText: 'Post Title'),
-              ),
-              const SizedBox(height: 8),
-              // Text field for post content
               TextField(
                 controller: contentController,
                 decoration: const InputDecoration(labelText: 'Post Content'),
@@ -93,20 +85,20 @@ class _MainPageState extends State<MainPage> {
             TextButton(
               child: const Text('Cancel'),
               onPressed: () {
-                Navigator.of(context).pop(); // Closes dialog.
+                Navigator.of(context).pop();
               },
             ),
             TextButton(
               child: const Text('Submit'),
               onPressed: () {
-                // Checks if fields are non-empty before adding post
-                if (titleController.text.isNotEmpty &&
-                    contentController.text.isNotEmpty) {
-                  AccountPage.recentPosts.add({
-                    'title': titleController.text,
-                    'content': contentController.text,
-                    'username': 'user123',
-                    'comments': _generateRandomComments(),
+                if (contentController.text.isNotEmpty) {
+                  setState(() {
+                    AccountPage.recentPosts.insert(0, {
+                      'content': contentController.text,
+                      'username': currentUsername,
+                      'comments': <Map<String, String>>[]
+                    });
+                    _pages[1] = HomePage(posts: AccountPage.recentPosts); // Re-instantiate HomePage
                   });
                   Navigator.of(context).pop();
                 }
@@ -140,41 +132,34 @@ class _MainPageState extends State<MainPage> {
       return {
         'username': usernames.removeAt(random.nextInt(usernames.length)),
         'content': randomComments[random.nextInt(randomComments.length)],
-        'date': _randomDate(),
+        'date': randomDate(),
       };
     });
   }
 
-  /// Generates a random date within the past 30 days.
-  String _randomDate() {
-    final now = DateTime.now();
-    final randomDays = Random().nextInt(30);
-    final randomDate = now.subtract(Duration(days: randomDays));
-    return "${randomDate.month}/${randomDate.day}/${randomDate.year}";
+  void refreshCurrentPage() {
+    setState(() {
+      // This will trigger the build method to run again, refreshing the UI
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    List<Widget> _pages = [
+      AccountPage(username: currentUsername),
+      HomePage(posts: AccountPage.recentPosts),
+    ];
+
     return Scaffold(
       appBar: AppBar(
-        title: const Center(
-          child: Text(
-            'Chit Chat',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
+        title: const Center(child: Text('Chit Chat')),
         backgroundColor: Colors.orange,
-        leading: isLoggedIn
-            ? IconButton(
-                icon: const Icon(Icons.logout),
-                onPressed: _logout,
-              )
-            : null,
+        leading: isLoggedIn ? IconButton(
+          icon: const Icon(Icons.logout),
+          onPressed: _logout,
+        ) : null,
       ),
-      body: _pages[_selectedIndex], // Displays the current page.
+      body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
@@ -186,7 +171,7 @@ class _MainPageState extends State<MainPage> {
             label: 'Home',
           ),
         ],
-        currentIndex: _selectedIndex, // Highlights selected tab.
+        currentIndex: _selectedIndex,
         selectedItemColor: Colors.orange,
         unselectedItemColor: Colors.grey,
         onTap: _onItemTapped,
@@ -262,6 +247,13 @@ class _MainPageState extends State<MainPage> {
     setState(() {
       isLoggedIn = false;
       isAdmin = false;
+      // Navigate to the home page
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => MainPage()),  // Navigate to MainPage
+        (Route<dynamic> route) => false,
+      );
     });
   }
+
+
 }

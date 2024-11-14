@@ -4,8 +4,16 @@ import 'post_card.dart';
 import 'account_page.dart';
 
 /// Home page displaying recent posts and randomly generated posts.
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+class HomePage extends StatefulWidget {
+  const HomePage({super.key, required List posts});
+
+  @override
+  _HomePageState createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  bool isLoggedIn = false;
+  bool isAdmin = false;
 
   @override
   Widget build(BuildContext context) {
@@ -19,12 +27,24 @@ class HomePage extends StatelessWidget {
             ? AccountPage.recentPosts[index]
             : randomPosts[index - AccountPage.recentPosts.length];
         return PostCard(
-          title: post['title'],
           content: post['content'],
           username: post['username'],
           comments: post['comments'],
+          onDelete: isLoggedIn ? () => setState(() {}) : null,
+          onAddComment: isLoggedIn ? () => _handleAddComment(post) : null,
         );
       },
+    );
+  }
+
+  void _handleAddComment(Map<String, dynamic> post) {
+    // Logic to handle adding a comment
+    // This is just a placeholder function
+  }
+
+  void showLoginAlert() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('You must be logged in to post and comment.')),
     );
   }
 
@@ -38,13 +58,6 @@ class HomePage extends StatelessWidget {
       "randomUser4",
       "randomUser5",
     ];
-    final List<String> randomTitles = [
-      "Random Thoughts",
-      "Flutter Tips",
-      "Tech News",
-      "Daily Update",
-      "Coding Fun",
-    ];
     final List<String> randomContents = [
       "Just sharing some thoughts...",
       "Here are some tips for Flutter.",
@@ -53,7 +66,6 @@ class HomePage extends StatelessWidget {
       "Coding is fun when you know how!",
     ];
 
-    // Limit each user to a maximum of 2 posts
     Map<String, int> userPostCount = {};
     return List.generate(5, (index) {
       String username;
@@ -64,7 +76,6 @@ class HomePage extends StatelessWidget {
       userPostCount[username] = (userPostCount[username] ?? 0) + 1;
 
       return {
-        'title': randomTitles[random.nextInt(randomTitles.length)],
         'content': randomContents[random.nextInt(randomContents.length)],
         'username': username,
         'comments': _generateRandomComments(),
@@ -96,16 +107,8 @@ class HomePage extends StatelessWidget {
       return {
         'username': username,
         'content': randomComments[random.nextInt(randomComments.length)],
-        'date': _randomDate(),
       };
     });
   }
-
-  /// Generates a random date within the past 30 days.
-  String _randomDate() {
-    final now = DateTime.now();
-    final randomDays = Random().nextInt(30);
-    final randomDate = now.subtract(Duration(days: randomDays));
-    return "${randomDate.month}/${randomDate.day}/${randomDate.year}";
-  }
+  
 }
