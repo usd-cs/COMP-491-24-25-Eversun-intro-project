@@ -52,6 +52,14 @@ class User(db.Model):
         salted_pass = salt[:8] + plaintext_password + salt[8:]
         check_hash = hashlib.sha256(salted_pass.encode('ascii')).hexdigest()
         return check_hash == hash
+    
+    def to_json(self):
+        column_map = {
+                "email": self.email,
+                "name": self.name,
+                "id": self.id
+        }
+        return json.dumps(column_map)
 
 class Post(db.Model):
     __tablename__ = "posts"

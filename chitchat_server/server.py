@@ -37,49 +37,50 @@ def login():
 #@app.route('/')
 #TODO: Need to check authentication
 @app.route('/v1/post/<int:id>', methods=['GET'])
-def getonepost(id):
-    print('Received GET message\n')
+def get_one_post(id):
     return view_single_post(id)
 
 @app.route('/v1/posts', methods=['GET'])
-def getallposts():
+def get_all_posts():
     return view_posts()
+
+@app.route('/v1/user/<int:id>', methods=['GET'])
+def get_user(id):
+    return view_user(id)
     
 
 @app.route('/v1/post/create', methods=['POST'])
-def createpost():
+def create_post():
     my_post = request.form.get('content')
     timestamp = datetime.now()
-    #print(request.form.get('mypost'),request.form.get('userid'))
     
     user_id = session.get('user_id')
     if user_id is None:
         abort(403)
-
-    print(my_post, user_id, timestamp)
     
     return insert_single_post(my_post, user_id, timestamp)
 
 @app.route('/v1/post/<int:post_id>/comment/create', methods=['POST'])
-def createcomment(post_id): 
+def create_comment(post_id): 
     my_comment = request.form.get('content')
     timestamp = datetime.now()
 
     user_id = session.get('user_id')
     if user_id is None:
         abort(403)
-
-    print(my_comment, user_id, timestamp, post_id)
             
     return insert_single_comment(my_comment, user_id, timestamp, post_id)
 
 @app.route('/v1/post/<int:post_id>/comment/<int:comment_id>', methods=['GET'])
-def getcomment(post_id, comment_id):
-    print(post_id, comment_id)
+def get_comment(comment_id):
     return get_single_comment(comment_id)
 
+@app.route('/v1/post/<int:post_id>/comments', methods=['GET'])
+def get_comments_for_post(post_id):
+    return get_all_comments(post_id)
+
 @app.route('/v1/post/delete/<int:id>',methods=['DELETE'])
-def deletepost(id):  
+def delete_post(id):  
     admin = session.get('is_admin')
     if admin is None or admin == False:
         abort(403)
@@ -87,7 +88,7 @@ def deletepost(id):
             
 
 @app.route('/v1/post/<int:post_id>/comment/delete/<int:id>',methods=['DELETE'])
-def deletecomment(post_id, id):
+def delete_comment(post_id, id):
     _ = post_id
     admin = session.get('is_admin')
     if admin is None or admin == False:
@@ -148,7 +149,6 @@ def insert_single_comment(my_comment, user_id, timestamp, post_id):
     
     db.session.refresh(comment)
 
-    print("Inserted single comment into database")
     return json.dumps({'success':True, 'comment_id':comment.id}), 200, {'ContentType':'application/json'}
 
 def insert_single_post(my_post, user_id, timestamp):
@@ -160,8 +160,17 @@ def insert_single_post(my_post, user_id, timestamp):
     db.session.add(post)
     db.session.commit()
     db.session.refresh(post)
-    print("Inserted single post into database")
+
     return json.dumps({'success':True, 'post_id':post.id}), 200, {'ContentType':'application/json'}
+
+def get_all_comments(post_id):
+    comments = db.session.execute(db.select(Comment).where(Comment.post_id == post_id)).scalars()
+    
+    comment_list = []
+    for comment in comments:
+        comment_list.append(comment.to_json())
+    return str(comment_list), 200, {'ContentType':'text/plain'}
+    
     
 
 def view_posts():
@@ -169,10 +178,15 @@ def view_posts():
     
     post_list = []
     for post in posts:
-        print(type(post))
         post_list.append(post.to_json())
     return str(post_list), 200, {'ContentType':'text/plain'}
 
+def view_user(user_id):
+    try:
+        user = db.session.execute(db.select(User).where(User.id == user_id)).scalar_one()
+        return user.to_json()
+    except sqlalchemy.exc.NoResultFound:
+        abort(404)
 
 
 def view_single_post(post_id):
@@ -181,15 +195,7 @@ def view_single_post(post_id):
         return comment.to_json()
     except sqlalchemy.exc.NoResultFound:
         abort(404)
-
-
-
-#How to test:
-#curl -F command="post" mypost="today was a great day" -F userid="17"  http://127.0.0.1:4999
-
-#Steps to do:
-#1) Unit tests
-#2) Authentication
+        
 
 
 if __name__ == "__main__":
