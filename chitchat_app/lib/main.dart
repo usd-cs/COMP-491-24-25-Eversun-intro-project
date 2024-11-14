@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
-import 'home_page.dart';
-import 'account_page.dart';
-import 'global_variables.dart';
-
 
 /// Main entry point of the application.
 void main() {
