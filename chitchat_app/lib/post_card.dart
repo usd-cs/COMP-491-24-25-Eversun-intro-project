@@ -5,8 +5,8 @@ import 'global_variables.dart';
 
 /// Card widget for displaying individual posts with title, content, and comments.
 class PostCard extends StatefulWidget {
+   final String? username;
   final String? content;
-  final String? username;
   final List<Map<String, String>>? comments;
   final VoidCallback? onDelete;
   final VoidCallback? onAddComment;

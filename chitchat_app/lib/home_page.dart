@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'dart:math';
 import 'post_card.dart';
-import 'account_page.dart';
+import 'services/post_service.dart';
+import 'services/user_service.dart';
+import 'query_attempts.dart';
 
-/// Home page displaying recent posts and randomly generated posts.
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required List posts});
 
@@ -12,124 +12,66 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  bool isLoggedIn = false;
-  bool isAdmin = false;
-  List<Map<String, dynamic>> randomPosts = [];
+  List<Post> posts = [];
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    randomPosts = _generateRandomPosts();
+    _loadPosts();
   }
 
-  void refreshPosts() {
-    setState(() {
-      // This will trigger a rebuild with the updated posts
-    });
+  Future<void> _loadPosts() async {
+    setState(() => isLoading = true);
+    try {
+      final loadedPosts = await PostService.getAllPosts();
+      setState(() {
+        posts = loadedPosts;
+        isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading posts: $e');
+      setState(() => isLoading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      padding: const EdgeInsets.all(8),
-      key: ValueKey(AccountPage.recentPosts.length + randomPosts.length),
-      itemCount: AccountPage.recentPosts.length + randomPosts.length,
-      itemBuilder: (BuildContext context, int index) {
-        final post = index < AccountPage.recentPosts.length
-            ? AccountPage.recentPosts[index]
-            : randomPosts[index - AccountPage.recentPosts.length];
-        return PostCard(
-          key: ValueKey('${post['username']}-${post['content']}'),
-          content: post['content'],
-          username: post['username'],
-          comments: post['comments'],
-          onDelete: isAdmin ? () {
-            setState(() {
-              if (index < AccountPage.recentPosts.length) {
-                AccountPage.recentPosts.removeAt(index);
-              } else {
-                randomPosts.removeAt(index - AccountPage.recentPosts.length);
-              }
-            });
-          } : null,
-          onAddComment: isLoggedIn ? () => _handleAddComment(post) : null,
-        );
-      },
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadPosts,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(8),
+        itemCount: posts.length,
+        itemBuilder: (BuildContext context, int index) {
+          final post = posts[index];
+          return PostCard(
+            content: post.content,
+            username: post.username,
+            comments: post.comments.map((comment) => {
+              'username': comment.username,
+              'content': comment.content,
+            }).toList(),
+            onDelete: UserService.isAdmin ? () => _handleDelete(post) : null,
+            onAddComment: UserService.isLoggedIn ? () => _handleAddComment(post) : null,
+          );
+        },
+      ),
     );
   }
 
-  void _handleAddComment(Map<String, dynamic> post) {
-    // Logic to handle adding a comment
-    // This is just a placeholder function
+  Future<void> _handleAddComment(Post post) async {
+    // Add your comment dialog/logic here
+    String commentContent = ""; // Get this from a dialog
+    await PostService.addComment(commentContent, int.parse(post.postId));
+    _loadPosts(); // Refresh the posts
   }
 
-  void showLoginAlert() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('You must be logged in to post and comment.')),
-    );
+  Future<void> _handleDelete(Post post) async {
+    await deletePost(int.parse(post.postId));
+    _loadPosts(); // Refresh the posts
   }
-
-  /// Generates a list of random posts for the homepage.
-  List<Map<String, dynamic>> _generateRandomPosts() {
-    final random = Random();
-    final List<String> usernames = [
-      "randomUser1",
-      "randomUser2",
-      "randomUser3",
-      "randomUser4",
-      "randomUser5",
-    ];
-    final List<String> randomContents = [
-      "Just sharing some thoughts...",
-      "Here are some tips for Flutter.",
-      "Latest news in tech today.",
-      "Here's what happened today.",
-      "Coding is fun when you know how!",
-    ];
-
-    Map<String, int> userPostCount = {};
-    return List.generate(5, (index) {
-      String username;
-      do {
-        username = usernames[random.nextInt(usernames.length)];
-      } while (userPostCount[username] != null && userPostCount[username]! >= 2);
-
-      userPostCount[username] = (userPostCount[username] ?? 0) + 1;
-
-      return {
-        'content': randomContents[random.nextInt(randomContents.length)],
-        'username': username,
-        'comments': _generateRandomComments(),
-      };
-    });
-  }
-
-  List<Map<String, String>> _generateRandomComments() {
-    final random = Random();
-    final List<String> usernames = [
-      "user123",
-      "flutterFan",
-      "devGuru",
-      "codeMaster",
-      "techSavvy",
-    ];
-    final List<String> randomComments = [
-      "I totally agree!",
-      "That's interesting.",
-      "Thanks for sharing!",
-      "I have a different opinion.",
-      "Great post!",
-    ];
-
-    // Ensure unique usernames for comments
-    List<String> availableUsernames = List.from(usernames);
-    return List.generate(2, (index) {
-      String username = availableUsernames.removeAt(random.nextInt(availableUsernames.length));
-      return {
-        'username': username,
-        'content': randomComments[random.nextInt(randomComments.length)],
-      };
-    });
-  }
-  
 }
