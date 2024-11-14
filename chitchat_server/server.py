@@ -1,6 +1,7 @@
-from flask import Flask, abort
+from flask import Flask, abort, session
 from datetime import datetime
 import json
+import secrets
 
 import sqlalchemy
 from sqlalchemy import orm
@@ -12,9 +13,10 @@ from models import Comment
 
 from flask import request
 app = Flask(__name__)
+app.secret_key = b"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 
 # TODO: Pull this info from environment variables
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:changeme@db"
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:changeme@localhost"
 db.init_app(app)
 with app.app_context():
     db.reflect()
@@ -22,6 +24,12 @@ with app.app_context():
 @app.route("/")
 def sanity_check():
     return "This works"
+
+@app.route('/v1/user/login', methods=['POST'])
+def login():
+    email = request.form.get("email")
+    password = request.form.get("password")
+    return validate_user(email, password)
 
 #@app.route('/')
 #TODO: Need to check authentication
@@ -38,22 +46,27 @@ def getallposts():
 @app.route('/v1/post/create', methods=['POST'])
 def createpost():
     my_post = request.form.get('content')
-    user_id = request.form.get('userid')
     timestamp = datetime.now()
-    print(my_post, user_id, timestamp)
     #print(request.form.get('mypost'),request.form.get('userid'))
-            
+    
+    user_id = session.get('user_id')
+    if user_id is None:
+        abort(403)
+
+    print(my_post, user_id, timestamp)
+    
     return insert_single_post(my_post, user_id, timestamp)
-
-
 
 @app.route('/v1/post/<int:post_id>/comment/create', methods=['POST'])
 def createcomment(post_id): 
     my_comment = request.form.get('content')
-    user_id = request.form.get('userid')
     timestamp = datetime.now()
     #comment_id = random.randomint(0,1000000) #generating a random number is temp, replace with unique post id, 
                                                     #requires persisting latest post id and incrementing
+    user_id = session.get('user_id')
+    if user_id is None:
+        abort(403)
+
     print(my_comment, user_id, timestamp, post_id)
     #print(request.form.get('mypost'),request.form.get('userid'))
             
@@ -66,19 +79,31 @@ def getcomment(post_id, comment_id):
 
 @app.route('/v1/post/delete/<int:id>',methods=['DELETE'])
 def deletepost(id):  
-    user_id = 1 # TODO: Get from cookie
-    return delete_single_post(user_id,id)
+    admin = session.get('is_admin')
+    if admin is None or admin == False:
+        abort(403)
+    return delete_single_post(id)
             
 
 @app.route('/v1/post/<int:post_id>/comment/delete/<int:id>',methods=['DELETE'])
 def deletecomment(post_id, id):
     _ = post_id
-    user_id = request.form.get('')
-    print(user_id, id)
+    admin = session.get('is_admin')
+    if admin is None or admin == False:
+        abort(403)
     #print(request.form.get('mypost'),request.form.get('userid'))
             
     return delete_single_comment(id)
 
+def validate_user(email, password_plaintext):
+    user = db.session.execute(db.select(User).where(User.email == email)).scalar_one()
+    if user.check_password(password_plaintext):
+        session['email'] = user.email
+        session['is_admin'] = user.admin
+        session['user_id'] = user.id
+        return json.dumps({'success':True}), 200, {'ContentType':'application/json'}
+    else:
+        abort(403)
 
 def get_single_comment(comment_id):
     try:
@@ -96,7 +121,7 @@ def delete_single_comment(comment_id):
     except sqlalchemy.orm.exc.NoResultFound:
         abort(404)
 
-def delete_single_post(_, post_id):
+def delete_single_post(post_id):
     try:
         post = db.session.get_one(Post, post_id)
         db.session.delete(post)
