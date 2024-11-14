@@ -7,24 +7,60 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:chitchat_app/main.dart';
+import 'package:chitchat_app/global_variables.dart';
+import 'package:chitchat_app/home_page.dart';
+import 'package:chitchat_app/post_card.dart';
+import 'package:chitchat_app/account_page.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  // Helper function to create a widget under test with necessary providers
+  Widget createTestableWidget(Widget child) {
+    return MaterialApp(
+      home: child,
+    );
+  }
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  group('MainPage Tests', () {
+    testWidgets('Navigates to HomePage when Home is tapped', (WidgetTester tester) async {
+      await tester.pumpWidget(createTestableWidget(const MainPage()));
+      await tester.tap(find.byIcon(Icons.home));
+      await tester.pumpAndSettle();
+      expect(find.byType(HomePage), findsOneWidget);
+    });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    testWidgets('Shows login dialog when not logged in and Account is tapped', (WidgetTester tester) async {
+      await tester.pumpWidget(createTestableWidget(const MainPage()));
+      await tester.tap(find.byIcon(Icons.account_circle));
+      await tester.pumpAndSettle();
+      expect(find.widgetWithText(TextButton, 'Login'), findsOneWidget);
+    });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    testWidgets('Creates a post when logged in and add button is pressed', (WidgetTester tester) async {
+      // Set logged in status
+      isLoggedIn = true;
+      currentUsername = 'testUser';
+
+      await tester.pumpWidget(createTestableWidget(const MainPage()));
+      await tester.tap(find.byIcon(Icons.add));
+      await tester.pumpAndSettle();
+
+      // Fill in the post creation form
+      await tester.enterText(find.byType(TextField).at(0), 'Test Title');
+      await tester.enterText(find.byType(TextField).at(1), 'Test Content');
+      await tester.tap(find.text('Submit'));
+      await tester.pumpAndSettle();
+
+      // Verify the post is added
+      expect(AccountPage.recentPosts.any((post) => post['title'] == 'Test Title' && post['content'] == 'Test Content'), isTrue);
+    });
+  });
+
+  group('HomePage Tests', () {
+    testWidgets('Displays random posts correctly', (WidgetTester tester) async {
+      await tester.pumpWidget(createTestableWidget(const HomePage()));
+      await tester.pumpAndSettle();
+      expect(find.byType(PostCard), findsWidgets);
+    });
   });
 }
