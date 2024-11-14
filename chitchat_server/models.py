@@ -43,7 +43,7 @@ class User(db.Model):
         self.email = email
         self.name = name
         self.admin = admin
-        salt = secrets.token_hex(16)
+        salt = secrets.token_hex(8)
         salted_pass = salt[:8] + password_plaintext + salt[8:]
         self.password = salt+hashlib.sha256(salted_pass.encode('ascii')).hexdigest()
 

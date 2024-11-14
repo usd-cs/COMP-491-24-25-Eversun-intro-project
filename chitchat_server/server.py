@@ -96,7 +96,11 @@ def deletecomment(post_id, id):
     return delete_single_comment(id)
 
 def validate_user(email, password_plaintext):
-    user = db.session.execute(db.select(User).where(User.email == email)).scalar_one()
+    try:
+        user = db.session.execute(db.select(User).where(User.email == email)).scalar_one()
+    except sqlalchemy.exc.NoResultFound:
+        abort(403) # Technically a 404, but return 403 so users cannot scrape if an email has an account
+
     if user.check_password(password_plaintext):
         session['email'] = user.email
         session['is_admin'] = user.admin
