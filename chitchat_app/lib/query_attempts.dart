@@ -2,7 +2,7 @@ import 'package:http/http.dart' as http;
 import 'paths.dart';
 import 'dart:convert';
 
-var usersCookie;
+String usersCookie = "";
 
 void main(List<String> arguments) async {
   // This example uses the Google Books API to search for books about http.
