@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
   email varchar UNIQUE NOT NULL,
   name varchar NOT NULL,
   admin bool NOT NULL,
-  password varchar(80) NOT NULL
+  password varchar NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS comments (
@@ -31,20 +31,5 @@ ALTER TABLE comments ADD FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE C
 
 ALTER TABLE posts ADD FOREIGN KEY (user_id) REFERENCES users (id);
 
-CREATE SEQUENCE post_id_seq
-    [INCREMENT BY 2]
-    [START WITH 101]
-    [MINVALUE 101]
-    [MAXVALUE 1000001]
-    [NO CYCLE]
-    [OWNED BY { posts.id }]
-
-CREATE SEQUENCE comment_id_seq
-    [INCREMENT BY 2]
-    [START WITH 100]
-    [MINVALUE 100]
-    [MAXVALUE 1000000]
-    [NO CYCLE]
-    [OWNED BY { comments.id }]
-
-INSERT INTO users (email, name, admin, password) VALUES ('test@localhost.lan', 'admin', true, 'hash+salt');
+-- DEBUG Only use this password in local environments
+INSERT INTO users (email, name, admin, password) VALUES ('test@localhost.lan', 'admin', true, 'bb69221a93dbd1de78c9d1354d1f004160c5ddd3ff3f78bec380e729b5a4964fdbfa69badf3d5d9d');

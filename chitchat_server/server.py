@@ -1,172 +1,217 @@
-from flask import Flask
-import os
-import psycopg2
-import time
+from flask import Flask, abort, session
+from datetime import datetime
 import json
-import init.sql
 
+import sqlalchemy
+from sqlalchemy import orm
+
+from models import db
 from models import User
 from models import Post
 from models import Comment
 
-def get_db_connection():
-    connection = psycopg2.connect(host='localhost', 
-                                database=' database_name', 
-                                user=os.environ['DB_USERNAME'], 
-                                password=os.environ['DB_PASSWORD'])
-    return connection
-
-
 from flask import request
 app = Flask(__name__)
 
-#add in some of john's code here - it is related to connection to the database, for importing classes
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://user:password@hostname"
+# TODO: Pull from environment variable
+app.secret_key = b"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+
+# TODO: Pull this info from environment variables
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:changeme@localhost"
 db.init_app(app)
 with app.app_context():
     db.reflect()
 
-#@app.route('/')
-#TO_DO: Need to check authentication
-@app.route('/getonepost', methods=['GET'])
-def getonepost():
-    print('Received GET message\n')
-    post_id = request.form.get('postid')
-    return view_single_post(post_id)
+# TODO: Remove print statements or replace with logs statements
 
-@app.route('/getallposts', methods=['GET'])
-def getallposts():
+@app.route("/")
+def sanity_check():
+    return "This works"
+
+@app.route('/v1/user/login', methods=['POST'])
+def login():
+    email = request.form.get("email")
+    password = request.form.get("password")
+    return validate_user(email, password)
+
+@app.route('/v1/user/logout', methods=["GET"])
+def logout():
+    
+    email = session.get("email")
+    print(session)
+    if email is None:
+        abort(404)
+
+    session.pop("email", None)
+    session.pop("is_admin", None)
+    session.pop("user_id", None)
+
+    return str(json.dumps({"status":"success"})), 200, {'ContentType':'application/json'}
+
+#@app.route('/')
+#TODO: Need to check authentication
+@app.route('/v1/post/<int:id>', methods=['GET'])
+def get_one_post(id):
+    return view_single_post(id)
+
+@app.route('/v1/posts', methods=['GET'])
+def get_all_posts():
     return view_posts()
+
+@app.route('/v1/user/<int:id>', methods=['GET'])
+def get_user(id):
+    return view_user(id)
     
 
-@app.route('/createpost', methods=['POST'])
-def createpost():
-    command = request.form.get(command)
-    my_post = request.form.get('mypost')
-    user_id = request.form.get('userid')
-    timestamp = time.time()
-    #post_id = random.randomint(0,1000000) #generating a random number is temp, replace with unique post id, 
-                                                    #requires persisting latest post id and incrementing
-    print(my_post, user_id, timestamp)
-    #print(request.form.get('mypost'),request.form.get('userid'))
-            
+@app.route('/v1/post/create', methods=['POST'])
+def create_post():
+    my_post = request.form.get('content')
+    timestamp = datetime.now()
+    
+    user_id = session.get('user_id')
+    if user_id is None:
+        abort(403)
+    
     return insert_single_post(my_post, user_id, timestamp)
 
+@app.route('/v1/post/<int:post_id>/comment/create', methods=['POST'])
+def create_comment(post_id): 
+    my_comment = request.form.get('content')
+    timestamp = datetime.now()
 
-
-@app.route('/createcomment', methods=['POST'])
-def createcomment(): 
-    my_comment = request.form.get('mycomment')
-    user_id = request.form.get('userid')
-    post_id = request.form.get('postid')
-    timestamp = time.time()
-    #comment_id = random.randomint(0,1000000) #generating a random number is temp, replace with unique post id, 
-                                                    #requires persisting latest post id and incrementing
-    print(my_comment, user_id, timestamp, post_id)
-    #print(request.form.get('mypost'),request.form.get('userid'))
+    user_id = session.get('user_id')
+    if user_id is None:
+        abort(403)
             
     return insert_single_comment(my_comment, user_id, timestamp, post_id)
 
+@app.route('/v1/post/<int:post_id>/comment/<int:comment_id>', methods=['GET'])
+def get_comment(comment_id):
+    return get_single_comment(comment_id)
 
-@app.route('/deletepost',methods=['POST'])
-def deletepost():  
-    user_id = request.form.get('userid')
-    post_id = request.form.get('postid')
-    print(user_id, post_id)
-    #print(request.form.get('mypost'),request.form.get('userid'))
+@app.route('/v1/post/<int:post_id>/comments', methods=['GET'])
+def get_comments_for_post(post_id):
+    return get_all_comments(post_id)
+
+@app.route('/v1/post/delete/<int:id>',methods=['DELETE'])
+def delete_post(id):  
+    admin = session.get('is_admin')
+    if admin is None or admin == False:
+        abort(403)
+    return delete_single_post(id)
             
-    return delete_single_post(user_id,post_id)
+
+@app.route('/v1/post/<int:post_id>/comment/delete/<int:id>',methods=['DELETE'])
+def delete_comment(post_id, id):
+    _ = post_id
+    admin = session.get('is_admin')
+    if admin is None or admin == False:
+        abort(403)
             
+    return delete_single_comment(id)
 
-@app.route('/deletecomment',methods=['POST'])
-def deletecomment():
+def validate_user(email, password_plaintext):
+    try:
+        user = db.session.execute(db.select(User).where(User.email == email)).scalar_one()
+    except sqlalchemy.orm.exc.NoResultFound:
+        abort(403) # Technically a 404, but return 403 so users cannot scrape if an email has an account
 
-    user_id = request.form.get('userid')
-    comment_id = request.form.get('commentid')
-    print(user_id, comment_id)
-    #print(request.form.get('mypost'),request.form.get('userid'))
-            
-    return delete_single_comment(user_id,comment_id)
+    if user.check_password(password_plaintext):
+        session['email'] = user.email
+        session['is_admin'] = user.admin
+        session['user_id'] = user.id
+        return json.dumps({'success':True}), 200, {'ContentType':'application/json'}
+    else:
+        abort(403)
 
-    
-def delete_single_comment(user_id, comment_id):
-    connection = get_db_connection()
-    cur = connection.cursor()
-    cur = connection.cursor()
-    cur.execute('DELETE FROM comments WHERE id = ?'
-                (comment_id,))
-    print("Deleted single post from database")
-    return "Deleted single post from database"
-    
-def delete_single_post(user_id, post_id):
-    connection = get_db_connection()
-    cur = connection.cursor()
-    cur = connection.cursor()
-    cur.execute('DELETE FROM posts WHERE id = ?'
-                (post_id,))
-    print("Deleted single post from database")
-    return "Deleted single post from database"
+def get_single_comment(comment_id):
+    try:
+        comment = db.session.execute(db.select(Comment).where(Comment.id == comment_id)).scalar_one()
+        return comment.to_json()
+    except sqlalchemy.orm.exc.NoResultFound:
+        abort(404)
+
+def delete_single_comment(comment_id):
+    try:
+        comment = db.session.get_one(Comment, comment_id)
+        db.session.delete(comment)
+        db.session.commit()
+        return json.dumps({'success':True}), 200, {'ContentType':'application/json'}
+    except sqlalchemy.orm.exc.NoResultFound:
+        abort(404)
+
+def delete_single_post(post_id):
+    try:
+        post = db.session.get_one(Post, post_id)
+        db.session.delete(post)
+        db.session.commit()
+        return json.dumps({'success':True}), 200, {'ContentType':'application/json'}
+    except sqlalchemy.orm.exc.NoResultFound:
+        abort(404)
     
 
     
 def insert_single_comment(my_comment, user_id, timestamp, post_id):
-    connection = get_db_connection()
-    cur = connection.cursor()
-    comment_id = cur.execute('SELECT nextval(init.sql.comment_id_seq)').fetchone()
-    cur.execute('INSERT INTO comments (id,contents,user_id, post_id, created_at)'
-                        'VALUES(%d,%s,%d,%d,%f)',
-                        comment_id, my_comment, user_id, post_id, timestamp)
-    cur.close()
-    connection.close()
-    print("Inserted single post into database")
-    return "Inserted single post into database"
+    comment = Comment(
+        contents=my_comment,
+        user_id=user_id,
+        post_id=post_id,
+        created_at=timestamp,
+    )
+    db.session.add(comment)
+    db.session.commit()
+    
+    db.session.refresh(comment)
+
+    return json.dumps({'success':True, 'comment_id':comment.id}), 200, {'ContentType':'application/json'}
 
 def insert_single_post(my_post, user_id, timestamp):
-    connection = get_db_connection()
-    cur = connection.cursor()
-    post_id = cur.execute('SELECT nextval(init.sql.post_id_seq)').fetchone()
-    cur.execute('INSERT INTO posts (id,contents,user_id,created_at)'
-                        'VALUES(%d,%s,%d,%f)',
-                        post_id, my_post, user_id, timestamp)
-    cur.close()
-    connection.close()
-    print("Inserted single post into database")
-    return "Inserted single post into database"
+    post = Post(
+        contents=my_post,
+        user_id=user_id,
+        created_at=timestamp
+    )
+    db.session.add(post)
+    db.session.commit()
+    db.session.refresh(post)
+
+    return json.dumps({'success':True, 'post_id':post.id}), 200, {'ContentType':'application/json'}
+
+def get_all_comments(post_id):
+    comments = db.session.execute(db.select(Comment).where(Comment.post_id == post_id)).scalars()
+    
+    comment_list = []
+    for comment in comments:
+        comment_list.append(comment.to_json())
+    return str(comment_list), 200, {'ContentType':'text/plain'}
+    
     
 
 def view_posts():
-    connection = get_db_connection()
-    cur = connection.cursor()
-    posts = cur.execute('SELECT * FROM posts').fetchall()
-    cur.close()
-    connection.close()
-    json_string = json.dumps(posts, indent=4)
-    return json_string
-    #return render_template('index.html', posts=posts)
+    posts = db.session.execute(db.select(Post).order_by(Post.created_at)).scalars()
+    
+    post_list = []
+    for post in posts:
+        post_list.append(post.to_json())
+    return str(post_list), 200, {'ContentType':'text/plain'}
 
+def view_user(user_id):
+    try:
+        user = db.session.execute(db.select(User).where(User.id == user_id)).scalar_one()
+        return user.to_json()
+    except sqlalchemy.exc.NoResultFound:
+        abort(404)
 
 
 def view_single_post(post_id):
-    connection = get_db_connection()
-    cur = connection.cursor()
-    post = cur.execute('SELECT * FROM posts WHERE id = ?',
-                        (post_id,)).fetchone()
-    cur.close()
-    connection.close()
-    json_string = json.dumps(post, indent=4)
-    #if post is None:
-        #abort(404)
-    return json_string
+    try:
+        comment = db.session.execute(db.select(Post).where(Post.id == post_id)).scalar_one()
+        return comment.to_json()
+    except sqlalchemy.exc.NoResultFound:
+        abort(404)
+        
 
 
-
-#How to test:
-#curl -F command="post" mypost="today was a great day" -F userid="17"  http://127.0.0.1:4999
-
-#Steps to do:
-#1) Unit tests
-#2) Authentication
-
-
-
+if __name__ == "__main__":
+    app.run()
     
