@@ -1,4 +1,4 @@
-String base = "http://localhost:8080";
+String base = "http://127.0.0.1:8080";
 
 Uri getAllPosts() {
   String temp = "$base/v1/posts";
@@ -10,13 +10,13 @@ Uri createPost() {
   return Uri.parse(temp);
 }
 
-Uri createComment(int postId) {
-  String temp =  "$base/v1/post/$postId/comment/create";
+Uri createComment(int postid) {
+  String temp =  "$base/v1/post/$postid/comment/create";
   return Uri.parse(temp);
 }
 
-Uri getComment(int postId, int commentId) {
-  String temp = "$base/v1/post/$postId/comment/$commentId";
+Uri getComment(int postid, int commentid) {
+  String temp = "$base/v1/post/$postid/comment/$commentid";
   return Uri.parse(temp);
 }
 
@@ -26,11 +26,17 @@ Uri getUsername(int userid) {
 }
 
 Uri removePost(int postid) {
-  String temp = "$base/v1/post/delete/$postid>";
+  String temp = "$base/v1/post/delete/$postid";
   return Uri.parse(temp);
 }
 
+Uri removeComment(int postid, int commentid) {
+  String temp = "$base/v1/post/$postid/comment/delete/$commentid";
+  return Uri.parse(temp);
+}
+
+
 Uri login() {
-  String temp = "$base/v1/user/login'>";
+  String temp = "$base/v1/user/login";
   return Uri.parse(temp);
 }

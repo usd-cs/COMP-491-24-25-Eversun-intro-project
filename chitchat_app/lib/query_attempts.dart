@@ -1,8 +1,8 @@
-import 'dart:ffi';
-
 import 'package:http/http.dart' as http;
 import 'paths.dart';
 import 'dart:convert';
+
+var usersCookie;
 
 void main(List<String> arguments) async {
   // This example uses the Google Books API to search for books about http.
@@ -11,9 +11,9 @@ void main(List<String> arguments) async {
 
   // Await the http get response, then decode the json-formatted response.
   //await addCommentToDatabase("love it", 1, 1);
-  List<bool> returned = await loginAttempt("kobe@sat", "saltydog");
-  print("HHHHHHH");
-  print(returned);
+  List<bool> returned = await loginAttempt("kobe@sat", "password");
+  deleteComment(2, 1);
+  
   //print(await getComment(1, 1));
 }
 
@@ -114,35 +114,64 @@ Future<String> getComment(int postId, int commentId) async {
   }
 }
 
-Future<void> deletePost(int postId) async {
-  //TODO: add cookie
-  var url = removePost(postId);
-  var response = await http.get(url as Uri);
+//Done!!!
+Future<bool> deletePost(int postId) async {
+  var uri = removePost(postId);
+  final map = <String, String>{};
+  map['cookie'] = usersCookie;
+  http.Response response = await http.delete(
+    uri,
+    headers: map,
+  );
+
   if (response.statusCode == 200) {
-    var jsonResponse = response.body;
+    return true;
   } else {
-    print('failed to get posts');
+    return false;
   }
 }
 
+//Done!!!
+Future<bool> deleteComment(int postId, int commentId) async {
+  var uri = removeComment(postId, commentId);
+  final map = <String, String>{};
+  map['cookie'] = usersCookie;
+  http.Response response = await http.delete(
+    uri,
+    headers: map,
+  );
+
+  if (response.statusCode == 200) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+//DONE!!!
 Future<List<bool>> loginAttempt(String username, String password) async {
   
   var uri = login();
   final map = <String, dynamic>{};
   map['email'] = username;
   map['password'] = password;
-
+  print(uri);
   http.Response response = await http.post(
     uri,
     body: map,
   );
 
+
   if (response.statusCode == 200) {
-    print(response.body);
-    //TODO: figure out how to verify admin
-    return [true, false];
+    usersCookie = response.headers['set-cookie'].toString().split(';')[0];
+    print(usersCookie);
+    String token = usersCookie.toString().split("session=")[1].split(';')[0].split('.')[0];
+    Codec<String, String> stringToBase64 = utf8.fuse(base64Url);
+    String data = stringToBase64.decode(token+("="*(token.length%4)));
+    Map<String, dynamic> jsonMap = jsonDecode(data);
+
+    return [true, jsonMap['is_admin']];
   } else {
-    print(response.body);
     return [false, false];
   }
 }
