@@ -1,7 +1,6 @@
 from flask import Flask, abort, session
 from datetime import datetime
 import json
-import secrets
 
 import sqlalchemy
 from sqlalchemy import orm
@@ -13,6 +12,8 @@ from models import Comment
 
 from flask import request
 app = Flask(__name__)
+
+# TODO: Pull from environment variable
 app.secret_key = b"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 
 # TODO: Pull this info from environment variables
@@ -20,6 +21,8 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:changeme@localhos
 db.init_app(app)
 with app.app_context():
     db.reflect()
+
+# TODO: Remove print statements or replace with logs statements
 
 @app.route("/")
 def sanity_check():
@@ -61,14 +64,12 @@ def createpost():
 def createcomment(post_id): 
     my_comment = request.form.get('content')
     timestamp = datetime.now()
-    #comment_id = random.randomint(0,1000000) #generating a random number is temp, replace with unique post id, 
-                                                    #requires persisting latest post id and incrementing
+
     user_id = session.get('user_id')
     if user_id is None:
         abort(403)
 
     print(my_comment, user_id, timestamp, post_id)
-    #print(request.form.get('mypost'),request.form.get('userid'))
             
     return insert_single_comment(my_comment, user_id, timestamp, post_id)
 
@@ -91,14 +92,13 @@ def deletecomment(post_id, id):
     admin = session.get('is_admin')
     if admin is None or admin == False:
         abort(403)
-    #print(request.form.get('mypost'),request.form.get('userid'))
             
     return delete_single_comment(id)
 
 def validate_user(email, password_plaintext):
     try:
         user = db.session.execute(db.select(User).where(User.email == email)).scalar_one()
-    except sqlalchemy.exc.NoResultFound:
+    except sqlalchemy.orm.exc.NoResultFound:
         abort(403) # Technically a 404, but return 403 so users cannot scrape if an email has an account
 
     if user.check_password(password_plaintext):
@@ -113,7 +113,7 @@ def get_single_comment(comment_id):
     try:
         comment = db.session.execute(db.select(Comment).where(Comment.id == comment_id)).scalar_one()
         return comment.to_json()
-    except:
+    except sqlalchemy.orm.exc.NoResultFound:
         abort(404)
 
 def delete_single_comment(comment_id):
@@ -172,7 +172,6 @@ def view_posts():
         print(type(post))
         post_list.append(post.to_json())
     return str(post_list), 200, {'ContentType':'text/plain'}
-    #return render_template('index.html', posts=posts)
 
 
 

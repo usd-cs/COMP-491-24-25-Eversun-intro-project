@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
   email varchar UNIQUE NOT NULL,
   name varchar NOT NULL,
   admin bool NOT NULL,
-  password varchar(80) NOT NULL
+  password varchar NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS comments (
