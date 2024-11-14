@@ -11,26 +11,49 @@ void main(List<String> arguments) async {
 
   // Await the http get response, then decode the json-formatted response.
   //await addCommentToDatabase("love it", 1, 1);
-  List<bool> returned = await loginAttempt("kobe@sat", "password");
-  deleteComment(2, 1);
+  //List<bool> returned = await loginAttempt("kobe@sat", "password");
+  //print(usernameAndContentDataAllPosts());
   
+  retrieveUsername(1);
   //print(await getComment(1, 1));
+}
+
+Future<String> retrieveUsername(int userId) async {
+  var url = getUsername(userId);
+  var response = await http.get(url);
+  if (response.statusCode == 200) {
+    var jsonResponse = response.body;
+    print(jsonResponse);
+    return 'yay';
+  } else {
+    print("fail");
+    return 'failed to get posts';
+  }
 }
 
 //TODO: Possible waiting on paths
 Future<List<List<String>>> usernameAndContentDataAllPosts() async {
-  List<List<String>> returnedThing = [[]];
-   Map<String, String> idToUsername = {};
+  List<List<String>> returnedThing = [];
+  Map<String, String> idToUsername = {};
 
   var url = getAllPosts();
   var response = await http.get(url);
 
   if (response.statusCode == 200) {
-    var stringJsonResponse = response.body;
-    List posts = jsonDecode(stringJsonResponse);
+    String stringJsonResponse = response.body;
+    stringJsonResponse = stringJsonResponse.substring(2, stringJsonResponse.length-2);
+    List<String> listJson = stringJsonResponse.split('\', \'');
+    
+    List<Map<String, dynamic>> posts = [];
+  
+    for (var jsonStr in listJson) {
+    // Decode each JSON string into a Map and add to the list
+      posts.add(jsonDecode(jsonStr));
+    }
+    
     int numIterations = 0;
-
     for (var post in posts) {
+      returnedThing.add([]);
       String username = "";
       String userId = post['user_id'].toString();
       String content = post['contents'].toString();
@@ -40,22 +63,15 @@ Future<List<List<String>>> usernameAndContentDataAllPosts() async {
       if (idToUsername.containsKey(userId)) {
         username = idToUsername[userId]!;
       } else { //wamp wamp :(
-        url = getUsername(userId as int);
-        var usernameResponse = await http.get(url);
-        if (usernameResponse.statusCode == 200) {
-          username = usernameResponse.body; //got it add it to user
-          idToUsername[userId] = username;  //add it to the map
-        } else {
-          username = "userX";
-        }
+        
       }
 
       returnedThing[numIterations].add(username); 
       returnedThing[numIterations].add(content);
       returnedThing[numIterations].add(postId);
-
       numIterations++;
     }
+    print(returnedThing);
     return returnedThing;
   } else {
     return ([["UserUnknown","failed to get posts"]]);
@@ -99,18 +115,6 @@ Future<void> addCommentToDatabase(String postContent, int userid, int postId) as
     print('Post added successfully: ${response.body}');
   } else {
     print('Failed to add post. Status: ${response.statusCode}');
-  }
-}
-
-
-Future<String> getComment(int postId, int commentId) async {
-  var url = getComment(postId, commentId);
-  var response = await http.get(url as Uri);
-  if (response.statusCode == 200) {
-    var jsonResponse = response.body;
-    return jsonResponse;
-  } else {
-    return ('failed to get posts');
   }
 }
 
