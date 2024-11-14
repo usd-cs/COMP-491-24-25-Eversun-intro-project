@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
+import 'home_page.dart';
+import 'account_page.dart';
+import 'global_variables.dart';
+
 
 /// Main entry point of the application.
 void main() {
   runApp(const MyApp());
 }
-
 
 /// Root widget of the application.
 class MyApp extends StatelessWidget {
@@ -34,10 +37,7 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  int _selectedIndex = 1; // Tracks the selected navigation index.
-  bool isLoggedIn = false;
-  bool isAdmin = false;
-  String currentUsername = " ";
+  int _selectedIndex = 1; // Tracks the selected navigation index
   late List<Widget> _pages; // Declare _pages here without initializing
 
   @override
@@ -46,7 +46,7 @@ class _MainPageState extends State<MainPage> {
     // Initialize _pages here where instance variables are accessible
     _pages = [
       AccountPage(username: currentUsername),
-      HomePage(),
+      const HomePage(),
     ];
   }
 
@@ -195,7 +195,7 @@ class _MainPageState extends State<MainPage> {
           ? FloatingActionButton(
               onPressed: _showCreatePostDialog,
               backgroundColor: Colors.orange,
-              child: Icon(Icons.add),
+              child: const Icon(Icons.add),
             )
           : null,
     );
@@ -263,318 +263,5 @@ class _MainPageState extends State<MainPage> {
       isLoggedIn = false;
       isAdmin = false;
     });
-  }
-}
-
-/// Account page that displays user information and recent posts.
-class AccountPage extends StatelessWidget {
-  const AccountPage({super.key, required this.username});
-
-  final String username;
-
-  static List<Map<String, dynamic>> recentPosts = []; // Stores recent posts.
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(8),
-      children: [
-        // Displays a default profile picture.
-        const CircleAvatar(
-          radius: 50,
-          backgroundImage: AssetImage('assets/default_profile.png'),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'Username: $username',
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'Account Created: 01/01/2023',
-          style: TextStyle(fontSize: 16, color: Colors.grey),
-        ),
-        const SizedBox(height: 16),
-        const Text(
-          'Recent Posts',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
-        // Displays each recent post as a PostCard widget.
-        ...recentPosts.map((post) => PostCard(
-              title: post['title']!,
-              content: post['content']!,
-              username: 'user123',
-              comments: post['comments'],
-            )),
-      ],
-    );
-  }
-}
-
-/// Home page displaying recent posts and randomly generated posts.
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> randomPosts = _generateRandomPosts();
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(8),
-      itemCount: AccountPage.recentPosts.length + randomPosts.length,
-      itemBuilder: (BuildContext context, int index) {
-        final post = index < AccountPage.recentPosts.length
-            ? AccountPage.recentPosts[index]
-            : randomPosts[index - AccountPage.recentPosts.length];
-        return PostCard(
-          title: post['title'],
-          content: post['content'],
-          username: post['username'],
-          comments: post['comments'],
-          isAdmin: (context.findAncestorStateOfType<_MainPageState>()?.isAdmin ?? false),
-        );
-      },
-    );
-  }
-
-  /// Generates a list of random posts for the homepage.
-  List<Map<String, dynamic>> _generateRandomPosts() {
-    final random = Random();
-    final List<String> usernames = [
-      "randomUser1",
-      "randomUser2",
-      "randomUser3",
-      "randomUser4",
-      "randomUser5",
-    ];
-    final List<String> randomTitles = [
-      "Random Thoughts",
-      "Flutter Tips",
-      "Tech News",
-      "Daily Update",
-      "Coding Fun",
-    ];
-    final List<String> randomContents = [
-      "Just sharing some thoughts...",
-      "Here are some tips for Flutter.",
-      "Latest news in tech today.",
-      "Here's what happened today.",
-      "Coding is fun when you know how!",
-    ];
-
-    // Limit each user to a maximum of 2 posts
-    Map<String, int> userPostCount = {};
-    return List.generate(5, (index) {
-      String username;
-      do {
-        username = usernames[random.nextInt(usernames.length)];
-      } while (userPostCount[username] != null && userPostCount[username]! >= 2);
-
-      userPostCount[username] = (userPostCount[username] ?? 0) + 1;
-
-      return {
-        'title': randomTitles[random.nextInt(randomTitles.length)],
-        'content': randomContents[random.nextInt(randomContents.length)],
-        'username': username,
-        'comments': _generateRandomComments(),
-      };
-    });
-  }
-
-  List<Map<String, String>> _generateRandomComments() {
-    final random = Random();
-    final List<String> usernames = [
-      "user123",
-      "flutterFan",
-      "devGuru",
-      "codeMaster",
-      "techSavvy",
-    ];
-    final List<String> randomComments = [
-      "I totally agree!",
-      "That's interesting.",
-      "Thanks for sharing!",
-      "I have a different opinion.",
-      "Great post!",
-    ];
-
-    // Ensure unique usernames for comments
-    List<String> availableUsernames = List.from(usernames);
-    return List.generate(2, (index) {
-      String username = availableUsernames.removeAt(random.nextInt(availableUsernames.length));
-      return {
-        'username': username,
-        'content': randomComments[random.nextInt(randomComments.length)],
-        'date': _randomDate(),
-      };
-    });
-  }
-
-  /// Generates a random date within the past 30 days.
-  String _randomDate() {
-    final now = DateTime.now();
-    final randomDays = Random().nextInt(30);
-    final randomDate = now.subtract(Duration(days: randomDays));
-    return "${randomDate.month}/${randomDate.day}/${randomDate.year}";
-  }
-}
-
-/// Card widget for displaying individual posts with title, content, and comments.
-class PostCard extends StatelessWidget {
-  final String? title;
-  final String? content;
-  final String? username;
-  final List<Map<String, String>>? comments;
-  final bool isAdmin;
-  final Random random = Random();
-
-  PostCard({super.key, this.title, this.content, this.username, this.comments, this.isAdmin = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  username ?? "Anonymous",
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  _randomDate(),
-                  style: const TextStyle(color: Colors.grey),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              title ?? "Untitled",
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(content ?? "No content"),
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerRight,
-              child: ElevatedButton(
-                onPressed: () {
-                  _showCommentsDialog(context);
-                },
-                child: const Text('View Comments'),
-              ),
-            ),
-            if (isAdmin)
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () {
-                    // Delete post logic
-                    AccountPage.recentPosts.removeWhere((post) => post['title'] == title);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Post deleted')),
-                    );
-                  },
-                  child: const Text('Delete Post', style: TextStyle(color: Colors.red)),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Generates a random date within the past 30 days.
-  String _randomDate() {
-    final now = DateTime.now();
-    final randomDays = random.nextInt(30);
-    final randomDate = now.subtract(Duration(days: randomDays));
-    return "${randomDate.month}/${randomDate.day}/${randomDate.year}";
-  }
-
-  /// Displays dialog with comments for the post and allows adding a new comment.
-  void _showCommentsDialog(BuildContext context) {
-    TextEditingController commentController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Comments'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // List of existing comments.
-              ...?comments?.map((comment) => Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            comment['username']!,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          Text(
-                            comment['date']!,
-                            style: const TextStyle(color: Colors.grey),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(comment['content']!),
-                      if (isAdmin)
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: () {
-                              // Delete comment logic
-                              comments?.remove(comment);
-                              Navigator.of(context).pop();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Comment deleted')),
-                              );
-                            },
-                            child: const Text('Delete Comment', style: TextStyle(color: Colors.red)),
-                          ),
-                        ),
-                      const Divider(),
-                    ],
-                  )),
-              // Input field for adding a new comment.
-              TextField(
-                controller: commentController,
-                decoration: const InputDecoration(labelText: 'Add a comment'),
-              ),
-            ],
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Back'),
-              onPressed: () {
-                Navigator.of(context).pop(); // Closes dialog.
-              },
-            ),
-            TextButton(
-              child: const Text('Submit'),
-              onPressed: () {
-                if (commentController.text.isNotEmpty) {
-                  comments?.add({
-                    'username': 'user123',
-                    'content': commentController.text,
-                    'date': _randomDate(),
-                  });
-                  Navigator.of(context).pop();
-                }
-              },
-            ),
-          ],
-        );
-      },
-    );
   }
 }
