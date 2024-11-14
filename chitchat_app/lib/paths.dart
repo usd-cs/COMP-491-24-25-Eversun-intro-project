@@ -15,10 +15,11 @@ Uri createComment(int postid) {
   return Uri.parse(temp);
 }
 
-Uri getComment(int postid, int commentid) {
-  String temp = "$base/v1/post/$postid/comment/$commentid";
+Uri getAllComments(int postid) {
+  String temp = "$base/v1/post/$postid/comments";
   return Uri.parse(temp);
 }
+
 
 Uri getUsername(int userid) {
   String temp = "$base/v1/user/$userid";
