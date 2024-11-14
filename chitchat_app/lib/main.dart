@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'dart:math';
 
 /// Main entry point of the application.
 void main() {
   runApp(const MyApp());
 }
+
 
 /// Root widget of the application.
 class MyApp extends StatelessWidget {

@@ -1,0 +1,33 @@
+name: Flutter Lint
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  flutter-lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.24.4
+
+      - name: Install dependencies
+        run: 
+          cd chitchat_app;
+          flutter pub get
+
+      - name: Run Flutter lint
+        run:
+          cd chitchat_app; 
+          flutter analyze
+
+      - name: Run Flutter tests
+        run:
+          cd chitchat_app;
+          flutter test

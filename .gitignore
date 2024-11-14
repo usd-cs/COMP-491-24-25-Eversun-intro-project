@@ -1,7 +1,7 @@
 # Database volume information
 
-sql/dbdata/*
-sql/pgadmin-data/*
+**/sql/dbdata/*
+**/sql/pgadmin-data/*
 
 # Miscellaneous
 *.class
