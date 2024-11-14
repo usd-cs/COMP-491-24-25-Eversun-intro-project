@@ -36,18 +36,28 @@ class _MainPageState extends State<MainPage> {
   int _selectedIndex = 1; // Tracks the selected navigation index.
   bool isLoggedIn = false;
   bool isAdmin = false;
+  String currentUsername = " ";
+  late List<Widget> _pages; // Declare _pages here without initializing
 
-  // List of pages for navigation.
-  static const List<Widget> _pages = <Widget>[
-    AccountPage(),
-    HomePage(),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    // Initialize _pages here where instance variables are accessible
+    _pages = [
+      AccountPage(username: currentUsername),
+      HomePage(),
+    ];
+  }
 
   /// Handles bottom navigation taps and updates selected index.
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+    if (index == 0 && !isLoggedIn) { // Account page index is 0
+      _showLoginDialog();
+    } else {
+      setState(() {
+        _selectedIndex = index;
+      });
+    }
   }
 
   /// Displays a dialog to create a new post with a title and content.
@@ -156,18 +166,12 @@ class _MainPageState extends State<MainPage> {
           ),
         ),
         backgroundColor: Colors.orange,
-        actions: [
-          if (isLoggedIn)
-            IconButton(
-              icon: const Icon(Icons.logout),
-              onPressed: _logout,
-            )
-          else
-            IconButton(
-              icon: const Icon(Icons.login),
-              onPressed: _showLoginDialog,
-            ),
-        ],
+        leading: isLoggedIn
+            ? IconButton(
+                icon: const Icon(Icons.logout),
+                onPressed: _logout,
+              )
+            : null,
       ),
       body: _pages[_selectedIndex], // Displays the current page.
       bottomNavigationBar: BottomNavigationBar(
@@ -236,6 +240,7 @@ class _MainPageState extends State<MainPage> {
                   setState(() {
                     isLoggedIn = true;
                     isAdmin = username == 'admin';
+                    currentUsername = username;
                   });
                   Navigator.of(context).pop();
                 } else {
@@ -262,7 +267,9 @@ class _MainPageState extends State<MainPage> {
 
 /// Account page that displays user information and recent posts.
 class AccountPage extends StatelessWidget {
-  const AccountPage({super.key});
+  const AccountPage({super.key, required this.username});
+
+  final String username;
 
   static List<Map<String, dynamic>> recentPosts = []; // Stores recent posts.
 
@@ -277,9 +284,9 @@ class AccountPage extends StatelessWidget {
           backgroundImage: AssetImage('assets/default_profile.png'),
         ),
         const SizedBox(height: 16),
-        const Text(
-          'Username: user123',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        Text(
+          'Username: $username',
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         const Text(
