@@ -3,12 +3,14 @@ import 'paths.dart';
 import 'dart:convert';
 
 String usersCookie = "";
+int globalUserId = -1;
 
 void main(List<String> arguments) async {
   // This example uses the Google Books API to search for books about http.
   // https://developers.google.com/books/docs/overview
 
-  
+  await loginAttempt("test@localhost.lan", "password");
+  await addPostToDatabase("This is a example post", 1);
 }
 //Done!!!
 Future<String> retrieveUsername(int userId) async {
@@ -135,8 +137,10 @@ Future<bool> addPostToDatabase(String postContent, int userid) async {
   );
 
   if (response.statusCode == 200) {
+    print("added post");
     return true;
   } else {
+    print('fail');
     return false;
   }
 }
@@ -210,16 +214,17 @@ Future<List<bool>> loginAttempt(String username, String password) async {
     body: map,
   );
 
-
   if (response.statusCode == 200) {
     usersCookie = response.headers['set-cookie'].toString().split(';')[0];
     String token = usersCookie.toString().split("session=")[1].split(';')[0].split('.')[0];
     Codec<String, String> stringToBase64 = utf8.fuse(base64Url);
     String data = stringToBase64.decode(token+("="*(token.length%4)));
     Map<String, dynamic> jsonMap = jsonDecode(data);
-
+    
+    jsonMap['user_id:'] = globalUserId;
     return [true, jsonMap['is_admin']];
   } else {
+    print("fail");
     return [false, false];
   }
 }

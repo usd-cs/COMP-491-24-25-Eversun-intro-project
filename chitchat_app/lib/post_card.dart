@@ -1,83 +1,78 @@
+import 'package:chitchat_app/query_attempts.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 import 'dart:math';
 import 'account_page.dart';
 import 'global_variables.dart';
 
 /// Card widget for displaying individual posts with title, content, and comments.
-class PostCard extends StatelessWidget {
-  final String? title;
+class PostCard extends StatefulWidget {
+   final String? username;
   final String? content;
-  final String? username;
   final List<Map<String, String>>? comments;
-  final Random random = Random();
+  final VoidCallback? onDelete;
+  final VoidCallback? onAddComment;
 
-  PostCard({super.key, this.title, this.content, this.username, this.comments});
+  PostCard({super.key, this.content, this.username, this.comments, this.onDelete, this.onAddComment});
+
+  @override
+  _PostCardState createState() => _PostCardState();
+}
+
+class _PostCardState extends State<PostCard> {
+  Random random = Random();
+  bool _isVisible = true;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  username ?? "Anonymous",
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  _randomDate(),
-                  style: const TextStyle(color: Colors.grey),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              title ?? "Untitled",
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(content ?? "No content"),
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerRight,
-              child: ElevatedButton(
-                onPressed: () {
-                  _showCommentsDialog(context);
-                },
-                child: const Text('View Comments'),
+    return Visibility(
+      visible: _isVisible,
+      child: Card(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(widget.username ?? "Anonymous", style: TextStyle(fontWeight: FontWeight.bold)),
+              Text(widget.content ?? ""),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      _showCommentsDialog(context);
+                    },
+                    child: const Text('View Comments'),
+                  ),
+                  if (isAdmin) ...[
+                    const SizedBox(width: 8),
+                    TextButton(
+                      onPressed: () {
+                        AccountPage.recentPosts.removeWhere((post) => 
+                            post['content'] == widget.content && 
+                            post['username'] == widget.username);
+                        
+                        setState(() {
+                          _isVisible = false;
+                        });
+                        
+                        widget.onDelete?.call();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Post deleted')),
+                        );
+                      },
+                      child: const Text('Delete Post', style: TextStyle(color: Colors.red)),
+                    ),
+                  ],
+                ],
               ),
-            ),
-            if (isAdmin)
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () {
-                    // Delete post logic
-                    AccountPage.recentPosts.removeWhere((post) => post['title'] == title);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Post deleted')),
-                    );
-                  },
-                  child: const Text('Delete Post', style: TextStyle(color: Colors.red)),
-                ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );
-  }
-
-  /// Generates a random date within the past 30 days.
-  String _randomDate() {
-    final now = DateTime.now();
-    final randomDays = random.nextInt(30);
-    final randomDate = now.subtract(Duration(days: randomDays));
-    return "${randomDate.month}/${randomDate.day}/${randomDate.year}";
   }
 
   /// Displays dialog with comments for the post and allows adding a new comment.
@@ -91,44 +86,48 @@ class PostCard extends StatelessWidget {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // List of existing comments.
-              ...?comments?.map((comment) => Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              ...?widget.comments?.map((comment) => Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            comment['username']!,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          Text(
-                            comment['date']!,
-                            style: const TextStyle(color: Colors.grey),
-                          ),
-                        ],
+                      Text(
+                        comment['username']!,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
-                      const SizedBox(height: 4),
-                      Text(comment['content']!),
-                      if (isAdmin)
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: () {
-                              // Delete comment logic
-                              comments?.remove(comment);
-                              Navigator.of(context).pop();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Comment deleted')),
-                              );
-                            },
-                            child: const Text('Delete Comment', style: TextStyle(color: Colors.red)),
-                          ),
-                        ),
-                      const Divider(),
                     ],
-                  )),
-              // Input field for adding a new comment.
+                  ),
+                  const SizedBox(height: 4),
+                  Text(comment['content']!),
+                  if (isAdmin)
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () {
+                          setState(() {
+                            widget.comments?.remove(comment);
+                            
+                            if (AccountPage.recentPosts.any((post) => 
+                                post['content'] == widget.content && 
+                                post['username'] == widget.username)) {
+                              final post = AccountPage.recentPosts.firstWhere((post) => 
+                                  post['content'] == widget.content && 
+                                  post['username'] == widget.username);
+                              post['comments'] = widget.comments;
+                            }
+                          });
+                          Navigator.of(context).pop();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Comment deleted')),
+                          );
+                        },
+                        child: const Text('Delete Comment', style: TextStyle(color: Colors.red)),
+                      ),
+                    ),
+                  const Divider(),
+                ],
+              )),
               TextField(
                 controller: commentController,
                 decoration: const InputDecoration(labelText: 'Add a comment'),
@@ -139,21 +138,24 @@ class PostCard extends StatelessWidget {
             TextButton(
               child: const Text('Back'),
               onPressed: () {
-                Navigator.of(context).pop(); // Closes dialog.
+                Navigator.of(context).pop();
               },
             ),
             TextButton(
               child: const Text('Submit'),
-              onPressed: () {
+              onPressed: isLoggedIn ? () {
                 if (commentController.text.isNotEmpty) {
-                  comments?.add({
-                    'username': 'user123',
-                    'content': commentController.text,
-                    'date': _randomDate(),
+                  //TODO addCommentToDatabase(commentController.text, globalUserId, post.postId)
+                  setState(() {
+                    widget.comments?.add({
+                      'username': currentUsername,
+                      'content': commentController.text,
+                      'date': randomDate(),
+                    });
                   });
                   Navigator.of(context).pop();
                 }
-              },
+              } : null,
             ),
           ],
         );
