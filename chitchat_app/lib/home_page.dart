@@ -14,6 +14,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   List<Post> posts = [];
   bool isLoading = true;
+  Map<int, List<Map<String,String>>> comments = {};
 
   @override
   void initState() {
@@ -23,9 +24,14 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _loadPosts() async {
     setState(() => isLoading = true);
+    Map<int, List<Map<String,String>>> comment_map = {};
     try {
       final loadedPosts = await PostService.getAllPosts();
+      for (int i = 0; i < loadedPosts.length; i++) {
+        comment_map[int.parse(loadedPosts[i].postId)] = await _loadCommentsForPost(int.parse(loadedPosts[i].postId));
+      }
       setState(() {
+        comments = comment_map;
         posts = loadedPosts;
         isLoading = false;
       });
@@ -37,11 +43,17 @@ class _HomePageState extends State<HomePage> {
 
   Future<List<Map<String, String>>> _loadCommentsForPost(int postID) async {
     // This just needs to pull the comments as needed for the postID. Currently broken
-    final loadedComments = await PostService.getAllComments(postID);
-    return loadedComments.map((comment) => {
+    try {
+      final loadedComments = await PostService.getAllComments(postID);
+      List<Map<String, String>> commentList = loadedComments.map((comment) => {
         'username': comment.username,
         'content': comment.content,
     }).toList();
+      return commentList;
+    } catch (e) {
+      print('Error loading comments: $e');
+      return <Map<String, String>>[];
+    }
   }
 
   @override
@@ -61,7 +73,7 @@ class _HomePageState extends State<HomePage> {
             postId: int.parse(post.postId),
             content: post.content,
             username: post.username,
-            comments: <Map<String, String>>[],
+            comments: comments[int.parse(post.postId)],
             onDelete: UserService.isAdmin ? () => _handleDelete(post) : null,
             onAddComment: UserService.isLoggedIn ? () => _handleAddComment(post) : null,
           );
