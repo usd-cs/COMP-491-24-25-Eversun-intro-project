@@ -80,5 +80,6 @@ class _HomePageState extends State<HomePage> {
   Future<void> _handleDelete(Post post) async {
     await deletePost(int.parse(post.postId));
     _loadPosts(); // Refresh the posts
+    
   }
 }

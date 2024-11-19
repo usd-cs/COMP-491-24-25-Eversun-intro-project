@@ -10,11 +10,11 @@ class PostCard extends StatefulWidget {
   final String? username;
   final String? content;
   final List<Map<String, String>>? comments;
-  final int postId;
+  final int? postId;
   final VoidCallback? onDelete;
   final VoidCallback? onAddComment;
 
-  PostCard({super.key,required this.postId, this.content, this.username, this.comments, this.onDelete, this.onAddComment});
+  PostCard({super.key, this.postId, this.content, this.username, this.comments, this.onDelete, this.onAddComment});
 
   @override
   _PostCardState createState() => _PostCardState();
@@ -145,8 +145,8 @@ class _PostCardState extends State<PostCard> {
             TextButton(
               child: const Text('Submit'),
               onPressed: isLoggedIn ? () {
-                if (commentController.text.isNotEmpty) {
-                  addCommentToDatabase(commentController.text, globalUserId, widget.postId);
+                if (commentController.text.isNotEmpty && widget.postId != null) {
+                  addCommentToDatabase(commentController.text, globalUserId, widget.postId!);
                   setState(() {
                     widget.comments?.add({
                       'username': currentUsername,
