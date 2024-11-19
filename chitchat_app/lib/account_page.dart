@@ -36,6 +36,7 @@ class AccountPage extends StatelessWidget {
         ),
         // Displays each recent post as a PostCard widget.
         ...recentPosts.map((post) => PostCard(
+              postId: post['id'],
               content: post['content']!,
               username: 'user123',
               comments: post['comments'],

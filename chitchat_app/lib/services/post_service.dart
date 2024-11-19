@@ -18,8 +18,8 @@ class Post {
 class Comment {
   final String username;
   final String content;
-
-  Comment({required this.username, required this.content});
+  final String commentId;
+  Comment({required this.username, required this.content, required this.commentId});
 }
 
 class PostService {
@@ -40,15 +40,15 @@ class PostService {
     return posts;
   }
 
-  static Future<List<Post>> getAllComments(int postId) async {    
+  static Future<List<Comment>> getAllComments(int postId) async {    
     List<List<String>> rawComment = await usernameAndContentDataAllComments(postId);
-    List<Post> comments = [];
+    List<Comment> comments = [];
     
     for (var commentData in rawComment) {
-      comments.add(Post(
+      comments.add(Comment(
         username: commentData[0],
         content: commentData[1],
-        postId: commentData[2],
+        commentId: commentData[2],
       ));
     }
     

@@ -35,6 +35,15 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<List<Map<String, String>>> _loadCommentsForPost(int postID) async {
+    // This just needs to pull the comments as needed for the postID. Currently broken
+    final loadedComments = await PostService.getAllComments(postID);
+    return loadedComments.map((comment) => {
+        'username': comment.username,
+        'content': comment.content,
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
@@ -49,12 +58,10 @@ class _HomePageState extends State<HomePage> {
         itemBuilder: (BuildContext context, int index) {
           final post = posts[index];
           return PostCard(
+            postId: int.parse(post.postId),
             content: post.content,
             username: post.username,
-            comments: post.comments.map((comment) => {
-              'username': comment.username,
-              'content': comment.content,
-            }).toList(),
+            comments: <Map<String, String>>[],
             onDelete: UserService.isAdmin ? () => _handleDelete(post) : null,
             onAddComment: UserService.isLoggedIn ? () => _handleAddComment(post) : null,
           );
