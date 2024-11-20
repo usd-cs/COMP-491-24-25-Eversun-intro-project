@@ -1,6 +1,5 @@
 import 'package:chitchat_app/query_attempts.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart';
 import 'dart:math';
 import 'account_page.dart';
 import 'global_variables.dart';
@@ -14,9 +13,10 @@ class PostCard extends StatefulWidget {
   final VoidCallback? onDelete;
   final VoidCallback? onAddComment;
 
-  PostCard({super.key, this.postId, this.content, this.username, this.comments, this.onDelete, this.onAddComment});
+  const PostCard({super.key, this.postId, this.content, this.username, this.comments, this.onDelete, this.onAddComment});
 
   @override
+  // ignore: library_private_types_in_public_api
   _PostCardState createState() => _PostCardState();
 }
 
@@ -35,7 +35,7 @@ class _PostCardState extends State<PostCard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(widget.username ?? "Anonymous", style: TextStyle(fontWeight: FontWeight.bold)),
+              Text(widget.username ?? "Anonymous", style: const TextStyle(fontWeight: FontWeight.bold)),
               Text(widget.content ?? ""),
               const SizedBox(height: 8),
               Row(
@@ -143,7 +143,6 @@ class _PostCardState extends State<PostCard> {
               },
             ),
             TextButton(
-              child: const Text('Submit'),
               onPressed: isLoggedIn ? () {
                 if (commentController.text.isNotEmpty && widget.postId != null) {
                   addCommentToDatabase(commentController.text, globalUserId, widget.postId!);
@@ -157,6 +156,7 @@ class _PostCardState extends State<PostCard> {
                   Navigator.of(context).pop();
                 }
               } : null,
+              child: const Text('Submit'),
             ),
           ],
         );

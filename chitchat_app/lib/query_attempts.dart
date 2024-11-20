@@ -137,10 +137,8 @@ Future<bool> addPostToDatabase(String postContent, int userid) async {
   );
 
   if (response.statusCode == 200) {
-    print("added post");
     return true;
   } else {
-    print('fail');
     return false;
   }
 }
@@ -224,7 +222,6 @@ Future<List<bool>> loginAttempt(String username, String password) async {
     jsonMap['user_id:'] = globalUserId;
     return [true, jsonMap['is_admin']];
   } else {
-    print("fail");
     return [false, false];
   }
 }

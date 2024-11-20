@@ -8,6 +8,7 @@ class HomePage extends StatefulWidget {
   const HomePage({super.key, required List posts});
 
   @override
+  // ignore: library_private_types_in_public_api
   _HomePageState createState() => _HomePageState();
 }
 
@@ -24,19 +25,18 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _loadPosts() async {
     setState(() => isLoading = true);
-    Map<int, List<Map<String,String>>> comment_map = {};
+    Map<int, List<Map<String,String>>> commentMap = {};
     try {
       final loadedPosts = await PostService.getAllPosts();
       for (int i = 0; i < loadedPosts.length; i++) {
-        comment_map[int.parse(loadedPosts[i].postId)] = await _loadCommentsForPost(int.parse(loadedPosts[i].postId));
+        commentMap[int.parse(loadedPosts[i].postId)] = await _loadCommentsForPost(int.parse(loadedPosts[i].postId));
       }
       setState(() {
-        comments = comment_map;
+        comments = commentMap;
         posts = loadedPosts;
         isLoading = false;
       });
     } catch (e) {
-      print('Error loading posts: $e');
       setState(() => isLoading = false);
     }
   }
@@ -51,7 +51,6 @@ class _HomePageState extends State<HomePage> {
     }).toList();
       return commentList;
     } catch (e) {
-      print('Error loading comments: $e');
       return <Map<String, String>>[];
     }
   }

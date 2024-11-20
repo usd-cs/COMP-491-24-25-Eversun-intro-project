@@ -3,7 +3,6 @@
 import 'package:chitchat_app/query_attempts.dart';
 import 'package:chitchat_app/services/user_service.dart';
 import 'package:flutter/material.dart';
-import 'dart:math';
 import 'home_page.dart';
 import 'global_variables.dart';
 import 'account_page.dart';
@@ -26,7 +25,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange), // Sets color theme.
         useMaterial3: true,
       ),
-      home: MainPage(), // Main page of the app, now not a constant.
+      home: const MainPage(), // Main page of the app, now not a constant.
     );
   }
 }
@@ -112,33 +111,6 @@ class _MainPageState extends State<MainPage> {
         );
       },
     );
-  }
-
-  /// Generates a list of random comments for a post.
-  List<Map<String, String>> _generateRandomComments() {
-    final random = Random();
-    final List<String> usernames = [
-      "user123",
-      "flutterFan",
-      "devGuru",
-      "codeMaster",
-      "techSavvy",
-    ];
-    final List<String> randomComments = [
-      "I totally agree!",
-      "That's interesting.",
-      "Thanks for sharing!",
-      "I have a different opinion.",
-      "Great post!",
-    ];
-
-    return List.generate(2, (index) {
-      return {
-        'username': usernames.removeAt(random.nextInt(usernames.length)),
-        'content': randomComments[random.nextInt(randomComments.length)],
-        'date': randomDate(),
-      };
-    });
   }
 
   void refreshCurrentPage() {
@@ -233,9 +205,11 @@ class _MainPageState extends State<MainPage> {
                     UserService.isAdmin = loginfeedback[1];
                     currentUsername = username;
                   });
+                  // ignore: use_build_context_synchronously
                   Navigator.of(context).pop();
                 } else {
                   // Show error message
+                  // ignore: use_build_context_synchronously
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Invalid credentials')),
                   );
@@ -255,7 +229,7 @@ class _MainPageState extends State<MainPage> {
       
       // Navigate to the home page
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => MainPage()),  // Navigate to MainPage
+        MaterialPageRoute(builder: (context) => const MainPage()),  // Navigate to MainPage
         (Route<dynamic> route) => false,
       );
     });
