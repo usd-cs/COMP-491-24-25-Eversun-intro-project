@@ -1,6 +1,7 @@
 from flask import Flask, abort, session
 from datetime import datetime
 import json
+import os
 
 import sqlalchemy
 from sqlalchemy import orm
@@ -16,11 +17,18 @@ app = Flask(__name__)
 # TODO: Pull from environment variable
 app.secret_key = b"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 
+if os.getenv("TESTING", "false") == "false":
 # TODO: Pull this info from environment variables
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:changeme@db"
-db.init_app(app)
-with app.app_context():
-    db.reflect()
+    app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:changeme@db"
+    db.init_app(app)
+    with app.app_context():
+        db.reflect()
+else:
+    app.config["TESTING"] = True
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://" # Use in-memory db for TESTING
+    db.init_app(app)
+    with app.app_context():
+        db.create_all()
 
 # TODO: Remove print statements or replace with logs statements
 
