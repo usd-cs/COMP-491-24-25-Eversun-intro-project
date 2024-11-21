@@ -16,5 +16,5 @@ To run the server, clone this repository and navigate to chitchat\_server. Once 
 
 ### Client Side
 
-TODO
+To run the app, navigate to `chitchat_app/lib/main.dart` and run the client by running the main function. In order for the app to work, the server side must be up and running before the app starts
 
