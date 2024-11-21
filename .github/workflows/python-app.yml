@@ -40,4 +40,5 @@ jobs:
     - name: Test with pytest
       run: |
         if [ -d chitchat_server ]; then cd chitchat_server; fi
+        export TESTING=true
         pytest
