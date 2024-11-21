@@ -222,6 +222,7 @@ class _MainPageState extends State<MainPage> {
     );
   }
 
+  /// Logs out the user and navigates to the main page.
   void _logout() {
     setState(() {
       isLoggedIn = false;
