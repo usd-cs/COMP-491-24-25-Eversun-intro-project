@@ -1,13 +1,10 @@
 import 'package:chitchat_app/global_variables.dart';
-import 'package:chitchat_app/paths.dart';
 import 'package:chitchat_app/services/user_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
 import 'package:chitchat_app/home_page.dart';
 import 'package:chitchat_app/services/post_service.dart';
-import 'package:mockito/mockito.dart';
 import 'mock_services.dart';
-import 'package:http/http.dart' as http;
 
 void main() {
   setUp(() {
@@ -17,7 +14,7 @@ void main() {
 
   group('HomePage Widget Tests with Mocked Server', () {
     testWidgets('Posts are loaded and displayed correctly', (WidgetTester tester) async {
-      await tester.pumpWidget(MaterialApp(home: HomePage(posts: [])));
+      await tester.pumpWidget(const MaterialApp(home: HomePage(posts: [])));
       await tester.pumpAndSettle();
 
       expect(find.text('Test post content 1'), findsOneWidget);
@@ -28,7 +25,7 @@ void main() {
       isAdmin = true;
       UserService.isAdmin = true;
 
-      await tester.pumpWidget(MaterialApp(
+      await tester.pumpWidget(const MaterialApp(
         home: ScaffoldMessenger(
           child: Scaffold(
             body: HomePage(posts: []),
@@ -47,7 +44,7 @@ void main() {
       UserService.isLoggedIn = true;
       currentUsername = 'testUser';
 
-      await tester.pumpWidget(MaterialApp(
+      await tester.pumpWidget(const MaterialApp(
         home: ScaffoldMessenger(
           child: Scaffold(
             body: HomePage(posts: []),
