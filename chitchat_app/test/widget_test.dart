@@ -1,30 +1,124 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
+import 'package:chitchat_app/global_variables.dart';
+import 'package:chitchat_app/paths.dart';
+import 'package:chitchat_app/services/user_service.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:chitchat_app/main.dart';
+import 'package:flutter/material.dart';
+import 'package:chitchat_app/home_page.dart';
+import 'package:chitchat_app/services/post_service.dart';
+import 'package:mockito/mockito.dart';
+import 'mock_services.dart';
+import 'package:http/http.dart' as http;
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  setUp(() {
+    PostService.getAllPosts = MockQueryService.getMockPosts;
+    PostService.getAllComments = MockQueryService.getMockComments;
+  });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  group('HomePage Widget Tests with Mocked Server', () {
+    testWidgets('Posts are loaded and displayed correctly', (WidgetTester tester) async {
+      await tester.pumpWidget(MaterialApp(home: HomePage(posts: [])));
+      await tester.pumpAndSettle();
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+      expect(find.text('Test post content 1'), findsOneWidget);
+      expect(find.text('testUser1'), findsOneWidget);
+    });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    testWidgets('Admin can delete posts', (WidgetTester tester) async {
+      isAdmin = true;
+      UserService.isAdmin = true;
+
+      await tester.pumpWidget(MaterialApp(
+        home: ScaffoldMessenger(
+          child: Scaffold(
+            body: HomePage(posts: []),
+          ),
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Delete Post'), findsWidgets);
+      await tester.tap(find.text('Delete Post').first);
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('Logged-in user can add comments', (WidgetTester tester) async {
+      isLoggedIn = true;
+      UserService.isLoggedIn = true;
+      currentUsername = 'testUser';
+
+      await tester.pumpWidget(MaterialApp(
+        home: ScaffoldMessenger(
+          child: Scaffold(
+            body: HomePage(posts: []),
+          ),
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('View Comments').first);
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), 'New test comment');
+      await tester.tap(find.text('Submit'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Test post content 1'), findsOneWidget);
+    });
+  });
+
+  group('PostService Tests', () {
+    test('getAllPosts returns correct Post objects', () async {
+      final posts = await PostService.getAllPosts();
+      expect(posts, isA<List<Post>>());
+      if (posts.isNotEmpty) {
+        expect(posts.first.username, isNotEmpty);
+        expect(posts.first.content, isNotEmpty);
+        expect(posts.first.postId, isNotEmpty);
+      }
+    });
+
+    test('getAllComments returns correct Comment objects', () async {
+      final comments = await PostService.getAllComments(1);
+      expect(comments, isA<List<Comment>>());
+      if (comments.isNotEmpty) {
+        expect(comments.first.username, isNotEmpty);
+        expect(comments.first.content, isNotEmpty);
+        expect(comments.first.commentId, isNotEmpty);
+      }
+    });
+  });
+
+  group('UserService Tests', () {
+    setUp(() {
+      // Reset state before each test
+      UserService.isLoggedIn = false;
+      UserService.currentUsername = '';
+      UserService.isAdmin = false;
+    });
+
+    test('login sets correct user state', () async {
+      final success = await MockQueryService.getMockLogin('test@test.com', 'test123');
+      expect(success, isTrue);
+      expect(UserService.isLoggedIn, isTrue);
+      expect(UserService.currentUsername, equals('testUser'));
+      expect(UserService.isAdmin, isFalse);
+    });
+
+    test('admin login sets correct state', () async {
+      final success = await MockQueryService.getMockLogin('admin@test.com', 'test123');
+      expect(success, isTrue);
+      expect(UserService.isLoggedIn, isTrue);
+      expect(UserService.currentUsername, equals('adminUser'));
+      expect(UserService.isAdmin, isTrue);
+    });
+
+    test('login fails with invalid credentials', () async {
+      final success = await MockQueryService.getMockLogin('invalid@test.com', 'wrong');
+      expect(success, isFalse);
+      expect(UserService.isLoggedIn, isFalse);
+      expect(UserService.currentUsername, isEmpty);
+      expect(UserService.isAdmin, isFalse);
+    });
   });
 }

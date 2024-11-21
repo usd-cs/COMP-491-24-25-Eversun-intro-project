@@ -19,7 +19,7 @@ class PostCard extends StatefulWidget {
   // ignore: library_private_types_in_public_api
   _PostCardState createState() => _PostCardState();
 }
-
+/// State class for the PostCard.
 class _PostCardState extends State<PostCard> {
   Random random = Random();
   bool _isVisible = true;

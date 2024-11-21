@@ -82,7 +82,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _handleAddComment(Post post) async {
-    // Add your comment dialog/logic here
     String commentContent = ""; // Get this from a dialog
     await PostService.addComment(commentContent, int.parse(post.postId));
     _loadPosts(); // Refresh the posts
