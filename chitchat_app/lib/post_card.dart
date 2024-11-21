@@ -107,8 +107,8 @@ class _PostCardState extends State<PostCard> {
                       child: TextButton(
                         onPressed: () {
                           setState(() {
-                            widget.comments?.remove(comment);
-                            
+                            deleteComment(widget.postId!, int.parse(comment['comment_id']!));
+                            widget.comments?.remove(comment); 
                             if (AccountPage.recentPosts.any((post) => 
                                 post['content'] == widget.content && 
                                 post['username'] == widget.username)) {
