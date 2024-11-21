@@ -1,6 +1,7 @@
 from flask import Flask, abort, session
 from datetime import datetime
 import json
+import os
 
 import sqlalchemy
 from sqlalchemy import orm
@@ -13,16 +14,20 @@ from models import Comment
 from flask import request
 app = Flask(__name__)
 
-# TODO: Pull from environment variable
+# This is the key that signs the session cookie. Change to something more secure in production environments.
 app.secret_key = b"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 
-# TODO: Pull this info from environment variables
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:changeme@localhost"
-db.init_app(app)
-with app.app_context():
-    db.reflect()
-
-# TODO: Remove print statements or replace with logs statements
+if os.getenv("TESTING", "false") == "false":
+    app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:changeme@db"
+    db.init_app(app)
+    with app.app_context():
+        db.reflect()
+else:
+    app.config["TESTING"] = True
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://" # Use in-memory db for testing
+    db.init_app(app)
+    with app.app_context():
+        db.create_all()
 
 @app.route("/")
 def sanity_check():
@@ -36,7 +41,6 @@ def login():
 
 @app.route('/v1/user/logout', methods=["GET"])
 def logout():
-    
     email = session.get("email")
     print(session)
     if email is None:
@@ -48,8 +52,6 @@ def logout():
 
     return str(json.dumps({"status":"success"})), 200, {'ContentType':'application/json'}
 
-#@app.route('/')
-#TODO: Need to check authentication
 @app.route('/v1/post/<int:id>', methods=['GET'])
 def get_one_post(id):
     return view_single_post(id)
@@ -115,7 +117,8 @@ def validate_user(email, password_plaintext):
         user = db.session.execute(db.select(User).where(User.email == email)).scalar_one()
     except sqlalchemy.orm.exc.NoResultFound:
         abort(403) # Technically a 404, but return 403 so users cannot scrape if an email has an account
-
+    
+    # Adding to session gives the user a session cookie provided auth.
     if user.check_password(password_plaintext):
         session['email'] = user.email
         session['is_admin'] = user.admin
