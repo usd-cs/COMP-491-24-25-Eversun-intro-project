@@ -184,25 +184,24 @@ Future<bool> deleteComment(int postId, int commentId, {http.Client? client}) asy
 }
 
 // loginAttempt function
-Future<List<bool>> loginAttempt(String username, String password, {http.Client? client}) async {
-  client ??= http.Client(); // Use the provided client or create a new one
+Future<List<bool>> loginAttempt(String username, String password) async {
   var uri = login();
   final map = <String, dynamic>{};
   map['email'] = username;
   map['password'] = password;
-  http.Response response = await client.post(
+  http.Response response = await http.post(
     uri,
     body: map,
   );
 
   if (response.statusCode == 200) {
-    usersCookie = response.headers['set-cookie']!.split(';')[0];
-    String token = usersCookie.split("session=")[1].split(';')[0].split('.')[0];
+    usersCookie = response.headers['set-cookie'].toString().split(';')[0];
+    String token = usersCookie.toString().split("session=")[1].split(';')[0].split('.')[0];
     Codec<String, String> stringToBase64 = utf8.fuse(base64Url);
-    String data = stringToBase64.decode(token + ("=" * (token.length % 4)));
+    String data = stringToBase64.decode(token+("="*(token.length%4)));
     Map<String, dynamic> jsonMap = jsonDecode(data);
-
-    globalUserId = jsonMap['user_id:']; // Storing globalUserId
+    
+    jsonMap['user_id:'] = globalUserId;
     return [true, jsonMap['is_admin']];
   } else {
     return [false, false];

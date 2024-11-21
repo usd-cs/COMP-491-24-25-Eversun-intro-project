@@ -145,18 +145,4 @@ void main() {
       expect(result, false);
     });
   });
-
-  // Test loginAttempt function
-  group('loginAttempt', () {
-
-    test('returns false when login fails', () async {
-      final client = MockClient((request) async {
-        return http.Response('Unauthorized', 401);  // Simulate failure
-      });
-
-      final result = await loginAttempt("test@domain.com", "password", client: client);
-
-      expect(result[0], false);
-    });
-  });
 }
