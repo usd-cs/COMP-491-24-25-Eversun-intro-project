@@ -48,6 +48,7 @@ class _HomePageState extends State<HomePage> {
       List<Map<String, String>> commentList = loadedComments.map((comment) => {
         'username': comment.username,
         'content': comment.content,
+        'comment_id': comment.commentId,
     }).toList();
       return commentList;
     } catch (e) {
