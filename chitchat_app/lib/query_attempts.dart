@@ -36,7 +36,6 @@ Future<List<List<String>>> usernameAndContentDataAllPosts({http.Client? client})
   var response = await client.get(url);
 
   if (response.statusCode == 200) {
-    print(response.body);
     String stringJsonResponse = response.body;
     stringJsonResponse = stringJsonResponse.substring(2, stringJsonResponse.length - 2);
     List<String> listJson = stringJsonResponse.split('\', \'');
