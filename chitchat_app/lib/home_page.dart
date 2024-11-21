@@ -1,111 +1,96 @@
 import 'package:flutter/material.dart';
-import 'dart:math';
 import 'post_card.dart';
-import 'account_page.dart';
+import 'services/post_service.dart';
+import 'services/user_service.dart';
+import 'query_attempts.dart';
 
-/// Home page displaying recent posts and randomly generated posts.
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+class HomePage extends StatefulWidget {
+  const HomePage({super.key, required List posts});
+
+  @override
+  // ignore: library_private_types_in_public_api
+  _HomePageState createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  List<Post> posts = [];
+  bool isLoading = true;
+  Map<int, List<Map<String,String>>> comments = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPosts();
+  }
+
+  Future<void> _loadPosts() async {
+    setState(() => isLoading = true);
+    Map<int, List<Map<String,String>>> commentMap = {};
+    try {
+      final loadedPosts = await PostService.getAllPosts();
+      for (int i = 0; i < loadedPosts.length; i++) {
+        commentMap[int.parse(loadedPosts[i].postId)] = await _loadCommentsForPost(int.parse(loadedPosts[i].postId));
+      }
+      setState(() {
+        comments = commentMap;
+        posts = loadedPosts;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() => isLoading = false);
+    }
+  }
+
+  Future<List<Map<String, String>>> _loadCommentsForPost(int postID) async {
+    // This just needs to pull the comments as needed for the postID. Currently broken
+    try {
+      final loadedComments = await PostService.getAllComments(postID);
+      List<Map<String, String>> commentList = loadedComments.map((comment) => {
+        'username': comment.username,
+        'content': comment.content,
+    }).toList();
+      return commentList;
+    } catch (e) {
+      return <Map<String, String>>[];
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> randomPosts = _generateRandomPosts();
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(8),
-      itemCount: AccountPage.recentPosts.length + randomPosts.length,
-      itemBuilder: (BuildContext context, int index) {
-        final post = index < AccountPage.recentPosts.length
-            ? AccountPage.recentPosts[index]
-            : randomPosts[index - AccountPage.recentPosts.length];
-        return PostCard(
-          title: post['title'],
-          content: post['content'],
-          username: post['username'],
-          comments: post['comments'],
-        );
-      },
+    return RefreshIndicator(
+      onRefresh: _loadPosts,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(8),
+        itemCount: posts.length,
+        itemBuilder: (BuildContext context, int index) {
+          final post = posts[index];
+          return PostCard(
+            postId: int.parse(post.postId),
+            content: post.content,
+            username: post.username,
+            comments: comments[int.parse(post.postId)],
+            onDelete: UserService.isAdmin ? () => _handleDelete(post) : null,
+            onAddComment: UserService.isLoggedIn ? () => _handleAddComment(post) : null,
+          );
+        },
+      ),
     );
   }
 
-  /// Generates a list of random posts for the homepage.
-  List<Map<String, dynamic>> _generateRandomPosts() {
-    final random = Random();
-    final List<String> usernames = [
-      "randomUser1",
-      "randomUser2",
-      "randomUser3",
-      "randomUser4",
-      "randomUser5",
-    ];
-    final List<String> randomTitles = [
-      "Random Thoughts",
-      "Flutter Tips",
-      "Tech News",
-      "Daily Update",
-      "Coding Fun",
-    ];
-    final List<String> randomContents = [
-      "Just sharing some thoughts...",
-      "Here are some tips for Flutter.",
-      "Latest news in tech today.",
-      "Here's what happened today.",
-      "Coding is fun when you know how!",
-    ];
-
-    // Limit each user to a maximum of 2 posts
-    Map<String, int> userPostCount = {};
-    return List.generate(5, (index) {
-      String username;
-      do {
-        username = usernames[random.nextInt(usernames.length)];
-      } while (userPostCount[username] != null && userPostCount[username]! >= 2);
-
-      userPostCount[username] = (userPostCount[username] ?? 0) + 1;
-
-      return {
-        'title': randomTitles[random.nextInt(randomTitles.length)],
-        'content': randomContents[random.nextInt(randomContents.length)],
-        'username': username,
-        'comments': _generateRandomComments(),
-      };
-    });
+  Future<void> _handleAddComment(Post post) async {
+    // Add your comment dialog/logic here
+    String commentContent = ""; // Get this from a dialog
+    await PostService.addComment(commentContent, int.parse(post.postId));
+    _loadPosts(); // Refresh the posts
   }
 
-  List<Map<String, String>> _generateRandomComments() {
-    final random = Random();
-    final List<String> usernames = [
-      "user123",
-      "flutterFan",
-      "devGuru",
-      "codeMaster",
-      "techSavvy",
-    ];
-    final List<String> randomComments = [
-      "I totally agree!",
-      "That's interesting.",
-      "Thanks for sharing!",
-      "I have a different opinion.",
-      "Great post!",
-    ];
-
-    // Ensure unique usernames for comments
-    List<String> availableUsernames = List.from(usernames);
-    return List.generate(2, (index) {
-      String username = availableUsernames.removeAt(random.nextInt(availableUsernames.length));
-      return {
-        'username': username,
-        'content': randomComments[random.nextInt(randomComments.length)],
-        'date': _randomDate(),
-      };
-    });
-  }
-
-  /// Generates a random date within the past 30 days.
-  String _randomDate() {
-    final now = DateTime.now();
-    final randomDays = Random().nextInt(30);
-    final randomDate = now.subtract(Duration(days: randomDays));
-    return "${randomDate.month}/${randomDate.day}/${randomDate.year}";
+  Future<void> _handleDelete(Post post) async {
+    await deletePost(int.parse(post.postId));
+    _loadPosts(); // Refresh the posts
+    
   }
 }

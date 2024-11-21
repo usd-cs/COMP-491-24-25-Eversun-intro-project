@@ -17,7 +17,7 @@ class AccountPage extends StatelessWidget {
         // Displays a default profile picture.
         const CircleAvatar(
           radius: 50,
-          backgroundImage: AssetImage('assets/default_profile.png'),
+          backgroundImage: AssetImage('assets/images/default_profile.png'),
         ),
         const SizedBox(height: 16),
         Text(
@@ -36,7 +36,7 @@ class AccountPage extends StatelessWidget {
         ),
         // Displays each recent post as a PostCard widget.
         ...recentPosts.map((post) => PostCard(
-              title: post['title']!,
+              postId: post['id'],
               content: post['content']!,
               username: 'user123',
               comments: post['comments'],

@@ -17,7 +17,7 @@ app = Flask(__name__)
 app.secret_key = b"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 
 # TODO: Pull this info from environment variables
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:changeme@localhost"
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:changeme@db"
 db.init_app(app)
 with app.app_context():
     db.reflect()
